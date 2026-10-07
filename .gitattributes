@@ -1,0 +1,3 @@
+# LF everywhere. The golden fixture pins git blob SHAs and source spans, which
+# must not change with the platform's line-ending conversion.
+* text=auto eol=lf
