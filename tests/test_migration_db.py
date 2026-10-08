@@ -18,7 +18,7 @@ import pytest
 from xraymyrepo.cim import Node, SnapshotDocument
 from xraymyrepo.cim.snapshot import CIM_SCHEMA_VERSION
 
-from .conftest import MIGRATIONS
+from .conftest import reset_database
 
 DATABASE_URL = os.environ.get("XRAY_TEST_DATABASE_URL")
 psycopg = pytest.importorskip("psycopg") if DATABASE_URL else None
@@ -30,9 +30,7 @@ pytestmark = pytest.mark.skipif(not DATABASE_URL, reason="XRAY_TEST_DATABASE_URL
 def conn() -> Iterator[Any]:
     assert psycopg is not None and DATABASE_URL is not None
     with psycopg.connect(DATABASE_URL, autocommit=True) as connection:
-        connection.execute("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;")
-        for migration in sorted(MIGRATIONS.glob("*.sql")):
-            connection.execute(migration.read_text(encoding="utf-8"))
+        reset_database(connection)
         yield connection
 
 
@@ -176,8 +174,9 @@ def test_golden_loads_completely(conn: Any, snapshot_id: int, golden: SnapshotDo
         len(golden.nodes), len(golden.edges), len(golden.classifications),
         len(golden.unresolved_references), len(golden.extraction_issues),
     )  # fmt: skip
-    assert conn.execute("SELECT version FROM schema_migration").fetchall() == [
-        ("0001_cim_v1_snapshot_tier",)
+    assert conn.execute("SELECT version FROM schema_migration ORDER BY version").fetchall() == [
+        ("0001_cim_v1_snapshot_tier",),
+        ("0002_snapshot_children_immutable",),
     ]
 
 
@@ -207,6 +206,13 @@ def _rejects(conn: Any, sql: str, params: tuple[Any, ...]) -> None:
         conn.execute(sql, params)
 
 
+def _violates_check(conn: Any, sql: str, params: tuple[Any, ...]) -> None:
+    """A CHECK constraint (not the immutability guard of the complete snapshot) rejects it."""
+    assert psycopg is not None
+    with pytest.raises(psycopg.errors.CheckViolation), conn.transaction():
+        conn.execute(sql, params)
+
+
 def test_completed_snapshot_is_immutable(conn: Any, snapshot_id: int) -> None:
     _rejects(conn, "UPDATE snapshot SET commit_sha = %s WHERE id = %s", ("f" * 40, snapshot_id))
     _rejects(conn, "UPDATE snapshot SET status = 'failed', failure_reason = 'x' WHERE id = %s",
@@ -229,7 +235,7 @@ def test_identity_is_unique(conn: Any, snapshot_id: int) -> None:
      ("confidence", "0.71")],
 )  # fmt: skip
 def test_node_constraints(conn: Any, snapshot_id: int, column: str, value: str) -> None:
-    _rejects(
+    _violates_check(
         conn,
         f"UPDATE node SET {column} = %s WHERE snapshot_id = %s AND key = 'backend/app/db.py#Base'",
         (value, snapshot_id),
@@ -242,7 +248,7 @@ def test_node_constraints(conn: Any, snapshot_id: int, column: str, value: str) 
      ("basis", "resolved"), ("evidence", "[]"), ("ambiguity_group", "g")],
 )  # fmt: skip
 def test_edge_constraints(conn: Any, snapshot_id: int, column: str, value: str) -> None:
-    _rejects(
+    _violates_check(
         conn,
         f"UPDATE edge SET {column} = %s WHERE snapshot_id = %s AND kind = 'TESTS'",
         (value, snapshot_id),
@@ -257,7 +263,7 @@ def test_edge_constraints(conn: Any, snapshot_id: int, column: str, value: str) 
 def test_edge_basis_is_restricted_per_kind(
     conn: Any, snapshot_id: int, kind: str, basis: str
 ) -> None:
-    _rejects(
+    _violates_check(
         conn,
         "UPDATE edge SET basis = %s, confidence = 'high' WHERE snapshot_id = %s AND kind = %s",
         (basis, snapshot_id, kind),
@@ -265,7 +271,7 @@ def test_edge_basis_is_restricted_per_kind(
 
 
 def test_classification_constraints(conn: Any, snapshot_id: int) -> None:
-    _rejects(
+    _violates_check(
         conn,
         "UPDATE classification SET value = 'data_model' WHERE snapshot_id = %s AND facet = 'role'",
         (snapshot_id,),
@@ -273,7 +279,7 @@ def test_classification_constraints(conn: Any, snapshot_id: int) -> None:
 
 
 def test_file_columns_required(conn: Any, snapshot_id: int) -> None:
-    _rejects(
+    _violates_check(
         conn,
         "UPDATE node SET extraction_status = NULL WHERE snapshot_id = %s AND kind = 'file'",
         (snapshot_id,),

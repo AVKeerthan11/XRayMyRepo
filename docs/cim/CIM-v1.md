@@ -330,3 +330,5 @@ Tables: `repository`, `producer`, `snapshot`, `snapshot_producer`, `node`, `edge
   Evidence and kind-specific attributes are JSONB, and are not GIN-indexed.
 * Evidence JSONB stores node **keys** and producer **names**, exactly as in the contract. Within a snapshot both
   resolve to one row (`node_key_unique`, `snapshot_producer_name_key`).
+* Migration 0002 (`snapshot_child_guard_immutable`) extends the snapshot guard to the rows a snapshot owns:
+  no insert, update or delete once the snapshot is not `pending`. Persistence: docs/persistence/postgres-v1.md.

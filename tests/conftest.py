@@ -19,6 +19,13 @@ PRODUCER_HASH = "sha256:" + "0" * 64
 SHA = "0123456789abcdef0123456789abcdef01234567"
 
 
+def reset_database(connection: Any) -> None:
+    """Drop everything in the disposable test database and apply every migration."""
+    connection.execute("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;")
+    for migration in sorted(MIGRATIONS.glob("*.sql")):
+        connection.execute(migration.read_text(encoding="utf-8"))
+
+
 @pytest.fixture(scope="session")
 def golden_raw() -> dict[str, Any]:
     data: dict[str, Any] = json.loads(GOLDEN_JSON.read_text(encoding="utf-8"))

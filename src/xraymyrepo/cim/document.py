@@ -89,9 +89,17 @@ class SnapshotDocument(CIMModel):
     # -- canonical form ------------------------------------------------------
 
     def canonical(self) -> SnapshotDocument:
-        """The same document with every collection in a deterministic order."""
+        """The same document with every collection in a deterministic order.
+
+        ``exclusion_policy`` (the one dict) follows ``Origin`` declaration order; the
+        policy covers every origin, so this only reorders it.
+        """
+        policy = self.config.exclusion_policy
         return self.model_copy(
             update={
+                "config": self.config.model_copy(
+                    update={"exclusion_policy": {origin: policy[origin] for origin in Origin}}
+                ),
                 "producers": tuple(sorted(self.producers, key=lambda p: p.name)),
                 "coverage": tuple(sorted(self.coverage, key=lambda c: c.language)),
                 "nodes": tuple(sorted(self.nodes, key=lambda n: n.key)),

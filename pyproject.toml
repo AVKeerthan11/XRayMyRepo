@@ -20,7 +20,11 @@ dev = [
     "ruff>=0.6",
     "mypy>=1.10",
 ]
-# Only needed to run the PostgreSQL migration test (tests/test_migration_db.py).
+# PostgreSQL persistence (xraymyrepo.persistence).
+postgres = [
+    "psycopg[binary]>=3.2",
+]
+# Needed to run the PostgreSQL tests (tests/test_migration_db.py, tests/test_persistence_db.py).
 db-tests = [
     "psycopg[binary]>=3.2",
 ]

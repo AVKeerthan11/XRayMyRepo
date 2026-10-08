@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 from collections import Counter
+from typing import Any
 
 import pytest
 
@@ -21,6 +22,7 @@ from xraymyrepo.cim import (
     ExtractionStatus,
     ImportsAttributes,
     NodeKind,
+    Origin,
     SnapshotDocument,
     SpanEvidence,
     UnresolvedReason,
@@ -73,6 +75,18 @@ def test_canonical_json_round_trips(golden: SnapshotDocument) -> None:
     again = SnapshotDocument.model_validate_json(text)
     assert again.canonical() == golden.canonical()
     assert again.to_canonical_json() == text
+
+
+def test_canonical_form_orders_the_exclusion_policy(
+    golden: SnapshotDocument, golden_data: dict[str, Any]
+) -> None:
+    policy = golden_data["config"]["exclusion_policy"]
+    golden_data["config"]["exclusion_policy"] = dict(reversed(policy.items()))
+    reordered = SnapshotDocument.model_validate(golden_data)  # same config_hash: keys are sorted
+    assert list(reordered.config.exclusion_policy) == list(reversed(Origin))
+    assert list(reordered.canonical().config.exclusion_policy) == list(Origin)
+    assert reordered.canonical() == golden.canonical()
+    assert reordered.to_canonical_json() == golden.to_canonical_json()
 
 
 # ---------------------------------------------------------------------------
