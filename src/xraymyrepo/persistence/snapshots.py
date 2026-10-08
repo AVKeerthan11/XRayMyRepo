@@ -32,6 +32,8 @@ from xraymyrepo.cim import (
 from xraymyrepo.cim.evidence import FactEvidence, SourceSpan
 from xraymyrepo.cim.nodes import Node
 
+from . import _rows
+
 Connection = psycopg.Connection[Any]
 
 _EVIDENCE: TypeAdapter[tuple[FactEvidence, ...]] = TypeAdapter(tuple[FactEvidence, ...])
@@ -336,7 +338,7 @@ def load_snapshot(conn: Connection, snapshot_id: int) -> SnapshotDocument:
     """Load a complete snapshot as a validated document, in canonical order.
 
     Seven queries regardless of size: the header, the producers and one per row
-    table. Node ids are mapped back to keys in memory. Constructing the document
+    table; joins resolve ids to node keys and producer names (``_rows``). Constructing the document
     re-runs every CIM check, so a reload is as trustworthy as the original.
     """
     with conn.transaction(), conn.cursor() as cur:
@@ -353,80 +355,28 @@ def load_snapshot(conn: Connection, snapshot_id: int) -> SnapshotDocument:
             raise SnapshotNotCompleteError(f"snapshot {snapshot_id} is {status}")
 
         producers = cur.execute(
-            "SELECT p.id, p.name, p.version, p.config_hash FROM snapshot_producer sp "
+            "SELECT p.name, p.version, p.config_hash FROM snapshot_producer sp "
             "JOIN producer p ON p.id = sp.producer_id WHERE sp.snapshot_id = %s ORDER BY p.name",
             (snapshot_id,),
         ).fetchall()
-        producer_names = {int(r[0]): r[1] for r in producers}
 
-        node_rows = cur.execute(
-            "SELECT id, key, kind, name, parent_id, language, start_line, start_col, end_line, "
-            "end_col, basis, confidence, producer_id, rule, extraction_status, blob_sha, "
-            "content_hash, signature_hash, evidence, attributes "
-            "FROM node WHERE snapshot_id = %s ORDER BY id",
-            (snapshot_id,),
-        ).fetchall()
-        keys = {int(r[0]): r[1] for r in node_rows}
+        def rows(columns: str, source: str, alias: str) -> list[Any]:
+            return cur.execute(
+                f"SELECT {columns}{source} WHERE {alias}.snapshot_id = %s ORDER BY {alias}.id",
+                (snapshot_id,),
+            ).fetchall()
 
-        def provenance(producer_id: int, rule: str | None) -> dict[str, Any]:
-            return {"producer": producer_names[producer_id], "rule": rule}
-
-        nodes = [
-            {"key": key, "kind": kind, "name": node_name,
-             "parent_key": None if parent_id is None else keys[parent_id],
-             "language": language, "span": _span_dict(sl, sc, el, ec),
-             "basis": basis, "confidence": confidence,
-             "provenance": provenance(producer_id, rule), "evidence": evidence,
-             "extraction_status": extraction_status, "blob_sha": blob_sha,
-             "content_hash": content_hash, "signature_hash": signature_hash,
-             "attributes": attributes}
-            for (_, key, kind, node_name, parent_id, language, sl, sc, el, ec, basis,
-                 confidence, producer_id, rule, extraction_status, blob_sha, content_hash,
-                 signature_hash, evidence, attributes) in node_rows
-        ]  # fmt: skip
-
-        edges = [
-            {"kind": kind, "source_key": keys[source_id], "target_key": keys[target_id],
-             "basis": basis, "confidence": confidence, "occurrence_count": occurrences,
-             "evidence": evidence, "ambiguity_group": ambiguity_group,
-             "contested": contested, "attributes": attributes}
-            for (kind, source_id, target_id, basis, confidence, occurrences, ambiguity_group,
-                 contested, evidence, attributes) in cur.execute(
-                "SELECT kind, source_id, target_id, basis, confidence, occurrence_count, "
-                "ambiguity_group, contested, evidence, attributes "
-                "FROM edge WHERE snapshot_id = %s ORDER BY id", (snapshot_id,))
-        ]  # fmt: skip
-
+        nodes = [_rows.node_data(r) for r in rows(_rows.NODE_COLUMNS, _rows.NODE_FROM, "n")]
+        edges = [_rows.edge_data(r) for r in rows(_rows.EDGE_COLUMNS, _rows.EDGE_FROM, "e")]
         classifications = [
-            {"node_key": keys[node_id], "facet": facet, "value": value, "basis": basis,
-             "confidence": confidence, "contested": contested, "evidence": evidence}
-            for (node_id, facet, value, basis, confidence, contested, evidence) in cur.execute(
-                "SELECT node_id, facet, value, basis, confidence, contested, evidence "
-                "FROM classification WHERE snapshot_id = %s ORDER BY id", (snapshot_id,))
-        ]  # fmt: skip
-
+            _rows.classification_data(r)
+            for r in rows(_rows.CLASSIFICATION_COLUMNS, _rows.CLASSIFICATION_FROM, "c")
+        ]
         unresolved = [
-            {"source_key": keys[source_id], "file_key": keys[file_id], "ref_kind": ref_kind,
-             "raw_text": raw_text, "start_line": sl, "start_col": sc, "end_line": el,
-             "end_col": ec, "reason": reason, "candidates": candidates,
-             "provenance": provenance(producer_id, rule)}
-            for (source_id, file_id, ref_kind, raw_text, sl, sc, el, ec, reason, candidates,
-                 producer_id, rule) in cur.execute(
-                "SELECT source_id, file_id, ref_kind, raw_text, start_line, start_col, "
-                "end_line, end_col, reason, candidates, producer_id, rule "
-                "FROM unresolved_reference WHERE snapshot_id = %s ORDER BY id", (snapshot_id,))
-        ]  # fmt: skip
-
-        issues = [
-            {"file_key": None if file_id is None else keys[file_id], "severity": severity,
-             "code": code, "message": message, "span": _span_dict(sl, sc, el, ec),
-             "provenance": provenance(producer_id, rule)}
-            for (file_id, severity, code, message, sl, sc, el, ec, producer_id, rule)
-            in cur.execute(
-                "SELECT file_id, severity, code, message, start_line, start_col, end_line, "
-                "end_col, producer_id, rule "
-                "FROM extraction_issue WHERE snapshot_id = %s ORDER BY id", (snapshot_id,))
-        ]  # fmt: skip
+            _rows.unresolved_data(r)
+            for r in rows(_rows.UNRESOLVED_COLUMNS, _rows.UNRESOLVED_FROM, "u")
+        ]
+        issues = [_rows.issue_data(r) for r in rows(_rows.ISSUE_COLUMNS, _rows.ISSUE_FROM, "i")]
 
     document = SnapshotDocument.model_validate(
         {
@@ -438,7 +388,7 @@ def load_snapshot(conn: Connection, snapshot_id: int) -> SnapshotDocument:
                 "config_hash": config_hash,
             },
             "config": config,
-            "producers": [{"name": r[1], "version": r[2], "config_hash": r[3]} for r in producers],
+            "producers": [{"name": r[0], "version": r[1], "config_hash": r[2]} for r in producers],
             "coverage": coverage,
             "nodes": nodes,
             "edges": edges,
@@ -448,12 +398,3 @@ def load_snapshot(conn: Connection, snapshot_id: int) -> SnapshotDocument:
         }
     )
     return document.canonical()
-
-
-def _span_dict(
-    start_line: int | None, start_col: int | None, end_line: int | None, end_col: int | None
-) -> dict[str, int | None] | None:
-    if start_line is None:
-        return None
-    return {"start_line": start_line, "start_col": start_col, "end_line": end_line,
-            "end_col": end_col}  # fmt: skip

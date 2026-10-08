@@ -19,10 +19,17 @@ dev = [
     "pytest>=8",
     "ruff>=0.6",
     "mypy>=1.10",
+    "httpx2>=2.13",  # FastAPI TestClient (Starlette prefers it over httpx)
 ]
 # PostgreSQL persistence (xraymyrepo.persistence).
 postgres = [
     "psycopg[binary]>=3.2",
+]
+# Read-only HTTP API over persisted snapshots (xraymyrepo.api).
+api = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "psycopg[binary,pool]>=3.2",
 ]
 # Needed to run the PostgreSQL tests (tests/test_migration_db.py, tests/test_persistence_db.py).
 db-tests = [
@@ -35,6 +42,9 @@ packages = ["src/xraymyrepo"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+markers = [
+    "slow: large generated data; deselect with -m \"not slow\"",
+]
 
 [tool.ruff]
 line-length = 100

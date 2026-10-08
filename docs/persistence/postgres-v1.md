@@ -32,6 +32,18 @@ Errors (all `PersistenceError`): `SnapshotExistsError` (identity already stored;
 `status`), `RepositoryIdentityError`, `SnapshotNotFoundError`, `SnapshotNotCompleteError`. Database
 constraint violations propagate as psycopg errors.
 
+### Read queries (`xraymyrepo.persistence.queries`)
+
+For callers that need part of a snapshot (the API), `queries` answers focused questions with a bounded number
+of indexed statements instead of materializing the document: repositories and snapshots (`list_repositories`,
+`get_repository`, `list_snapshots`, `get_snapshot`, `get_snapshot_setup`, `snapshot_stats`), nodes (`get_node`,
+`get_node_brief`, `get_children`, `count_children`, `get_ancestors`, `list_nodes`, `search_nodes`, `get_tags`,
+`get_classifications`), edges (`get_edges`, `edge_counts`, `get_edge`) and diagnostics (`get_diagnostics`,
+`diagnostic_counts`). They take and return CIM keys and records, never database ids; paged functions use
+keyset pagination (`after` = the sort key of the last item, see the `*_sort_key` helpers). They assume the
+snapshot is complete. Row-to-record mapping (`_rows.py`) is shared with `load_snapshot`.
+`REQUIRED_MIGRATIONS` lists the migrations the code depends on.
+
 ## Flow and transaction lifecycle
 
 `persist_snapshot` runs in **one transaction**:
