@@ -6,10 +6,11 @@ from typing import Annotated
 
 from fastapi import Depends, Path, Query
 
-from xraymyrepo.cim import InvalidKeyError, SnapshotStatus
+from xraymyrepo.cim import InvalidKeyError, NodeKind, SnapshotStatus
 from xraymyrepo.cim.enums import SNAPSHOT_NODE_KINDS
 from xraymyrepo.cim.keys import validate_key
-from xraymyrepo.persistence import queries
+from xraymyrepo.persistence import derivation_queries, queries
+from xraymyrepo.persistence.derivation_queries import RunRecord
 from xraymyrepo.persistence.queries import SnapshotRecord
 
 from .db import Conn
@@ -36,6 +37,24 @@ def complete_snapshot(snapshot_id: Annotated[int, Path(ge=1)], conn: Conn) -> Sn
 CompleteSnapshot = Annotated[SnapshotRecord, Depends(complete_snapshot)]
 
 
+def complete_run(run_id: Annotated[int, Path(ge=1)], conn: Conn) -> RunRecord:
+    """The requested derivation run, which must be complete for its data to be served.
+
+    A complete run's snapshot is complete too: runs are only created from complete
+    snapshots, and snapshots never change status afterwards.
+    """
+    record = derivation_queries.get_run(conn, run_id)
+    if record is None:
+        raise not_found("derivation_not_found", f"Derivation run {run_id} does not exist.")
+    if record.status is not SnapshotStatus.COMPLETE:
+        raise ApiError(409, "derivation_not_complete", "Derivation run not complete",
+                       f"Derivation run {run_id} is {record.status}.")  # fmt: skip
+    return record
+
+
+CompleteRun = Annotated[RunRecord, Depends(complete_run)]
+
+
 def checked_key(key: str, parameter: str) -> str:
     """Reject strings that are not a CIM node key of any snapshot kind (422).
 
@@ -49,3 +68,12 @@ def checked_key(key: str, parameter: str) -> str:
         return key
     raise ApiError(422, "invalid_key", "Invalid key",
                    f"Parameter {parameter!r} is not a valid CIM node key: {key!r}.")  # fmt: skip
+
+
+def checked_group_key(key: str, parameter: str) -> str:
+    """Reject strings that are not a CIM group key (``group:<lens>:<local>``) with 422."""
+    try:
+        return validate_key(NodeKind.GROUP, key)
+    except InvalidKeyError:
+        detail = f"Parameter {parameter!r} is not a valid CIM group key: {key!r}."
+        raise ApiError(422, "invalid_key", "Invalid key", detail) from None

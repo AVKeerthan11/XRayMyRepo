@@ -255,6 +255,170 @@
         "title": "CoverageDeclaration",
         "type": "object"
       },
+      "DerivationRunDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "title": "Algorithm",
+            "type": "string"
+          },
+          "algorithm_version": {
+            "title": "Algorithm Version",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "finding_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Finding Counts",
+            "type": "object"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "layer_coverage": {
+            "$ref": "#/components/schemas/LayerCoverage"
+          },
+          "lenses": {
+            "items": {
+              "$ref": "#/components/schemas/LensSummary"
+            },
+            "title": "Lenses",
+            "type": "array"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "params_hash": {
+            "title": "Params Hash",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SnapshotStatus"
+          }
+        },
+        "required": [
+          "id",
+          "snapshot_id",
+          "algorithm",
+          "algorithm_version",
+          "params_hash",
+          "status",
+          "failure_reason",
+          "created_at",
+          "finished_at",
+          "params",
+          "lenses",
+          "layer_coverage",
+          "finding_counts"
+        ],
+        "title": "DerivationRunDetail",
+        "type": "object"
+      },
+      "DerivationRunSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "title": "Algorithm",
+            "type": "string"
+          },
+          "algorithm_version": {
+            "title": "Algorithm Version",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "params_hash": {
+            "title": "Params Hash",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SnapshotStatus"
+          }
+        },
+        "required": [
+          "id",
+          "snapshot_id",
+          "algorithm",
+          "algorithm_version",
+          "params_hash",
+          "status",
+          "failure_reason",
+          "created_at",
+          "finished_at"
+        ],
+        "title": "DerivationRunSummary",
+        "type": "object"
+      },
       "DerivedEvidence": {
         "additionalProperties": false,
         "description": "Computed from other records of the same snapshot (rollups, inference).",
@@ -701,6 +865,90 @@
         "title": "FileAttributes",
         "type": "object"
       },
+      "FindingSeverity": {
+        "enum": [
+          "info",
+          "low",
+          "medium",
+          "high"
+        ],
+        "title": "FindingSeverity",
+        "type": "string"
+      },
+      "FindingView": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "$ref": "#/components/schemas/Basis"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "evidence": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "config": "#/components/schemas/ConfigEvidence",
+                  "convention": "#/components/schemas/ConventionEvidence",
+                  "derived": "#/components/schemas/DerivedEvidence",
+                  "span": "#/components/schemas/SpanEvidence"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/SpanEvidence"
+                },
+                {
+                  "$ref": "#/components/schemas/ConfigEvidence"
+                },
+                {
+                  "$ref": "#/components/schemas/ConventionEvidence"
+                },
+                {
+                  "$ref": "#/components/schemas/DerivedEvidence"
+                }
+              ]
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/FindingSeverity"
+          },
+          "subject_keys": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Subject Keys",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "rule",
+          "severity",
+          "subject_keys",
+          "message",
+          "basis",
+          "confidence",
+          "evidence"
+        ],
+        "title": "FindingView",
+        "type": "object"
+      },
       "FunctionAttributes": {
         "additionalProperties": false,
         "properties": {
@@ -728,6 +976,269 @@
         ],
         "title": "FunctionKind",
         "type": "string"
+      },
+      "GroupBrief": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "GroupBrief",
+        "type": "object"
+      },
+      "GroupDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "ancestors": {
+            "items": {
+              "$ref": "#/components/schemas/GroupBrief"
+            },
+            "title": "Ancestors",
+            "type": "array"
+          },
+          "basis": {
+            "$ref": "#/components/schemas/Basis"
+          },
+          "child_group_count": {
+            "title": "Child Group Count",
+            "type": "integer"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "evidence": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "config": "#/components/schemas/ConfigEvidence",
+                  "convention": "#/components/schemas/ConventionEvidence",
+                  "derived": "#/components/schemas/DerivedEvidence",
+                  "span": "#/components/schemas/SpanEvidence"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/SpanEvidence"
+                },
+                {
+                  "$ref": "#/components/schemas/ConfigEvidence"
+                },
+                {
+                  "$ref": "#/components/schemas/ConventionEvidence"
+                },
+                {
+                  "$ref": "#/components/schemas/DerivedEvidence"
+                }
+              ]
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "layer_mix": {
+            "$ref": "#/components/schemas/LayerMix"
+          },
+          "lens": {
+            "title": "Lens",
+            "type": "string"
+          },
+          "member_count": {
+            "title": "Member Count",
+            "type": "integer"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "parent_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Key"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          }
+        },
+        "required": [
+          "key",
+          "lens",
+          "label",
+          "parent_key",
+          "basis",
+          "confidence",
+          "child_group_count",
+          "member_count",
+          "metrics",
+          "layer_mix",
+          "provenance",
+          "evidence",
+          "ancestors"
+        ],
+        "title": "GroupDetail",
+        "type": "object"
+      },
+      "GroupEdgeView": {
+        "additionalProperties": false,
+        "description": "Leaf edges of one kind rolled up between two groups of one lens. Never averaged:\n``basis_counts`` says how many underlying edges have each basis.",
+        "properties": {
+          "basis_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/Basis"
+            },
+            "title": "Basis Counts",
+            "type": "object"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "edge_kind": {
+            "$ref": "#/components/schemas/EdgeKind"
+          },
+          "sample_edge_refs": {
+            "items": {
+              "$ref": "#/components/schemas/EdgeRef"
+            },
+            "title": "Sample Edge Refs",
+            "type": "array"
+          },
+          "source_group_key": {
+            "title": "Source Group Key",
+            "type": "string"
+          },
+          "target_group_key": {
+            "title": "Target Group Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_group_key",
+          "target_group_key",
+          "edge_kind",
+          "count",
+          "basis_counts",
+          "sample_edge_refs"
+        ],
+        "title": "GroupEdgeView",
+        "type": "object"
+      },
+      "GroupSummary": {
+        "additionalProperties": false,
+        "description": "A group as a tree item.",
+        "properties": {
+          "basis": {
+            "$ref": "#/components/schemas/Basis"
+          },
+          "child_group_count": {
+            "title": "Child Group Count",
+            "type": "integer"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "layer_mix": {
+            "$ref": "#/components/schemas/LayerMix"
+          },
+          "lens": {
+            "title": "Lens",
+            "type": "string"
+          },
+          "member_count": {
+            "title": "Member Count",
+            "type": "integer"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "parent_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Key"
+          }
+        },
+        "required": [
+          "key",
+          "lens",
+          "label",
+          "parent_key",
+          "basis",
+          "confidence",
+          "child_group_count",
+          "member_count",
+          "metrics",
+          "layer_mix"
+        ],
+        "title": "GroupSummary",
+        "type": "object"
       },
       "HandlesAttributes": {
         "additionalProperties": false,
@@ -852,6 +1363,148 @@
         ],
         "title": "IssueSeverity",
         "type": "string"
+      },
+      "LayerAssignment": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "$ref": "#/components/schemas/Basis"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/DerivedEvidence"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "layer": {
+            "title": "Layer",
+            "type": "string"
+          },
+          "node_key": {
+            "title": "Node Key",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          }
+        },
+        "required": [
+          "node_key",
+          "layer",
+          "basis",
+          "confidence",
+          "provenance",
+          "evidence"
+        ],
+        "title": "LayerAssignment",
+        "type": "object"
+      },
+      "LayerCoverage": {
+        "additionalProperties": false,
+        "properties": {
+          "by_confidence": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/Confidence"
+            },
+            "title": "By Confidence",
+            "type": "object"
+          },
+          "by_layer": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Layer",
+            "type": "object"
+          },
+          "classified": {
+            "title": "Classified",
+            "type": "integer"
+          },
+          "considered": {
+            "title": "Considered",
+            "type": "integer"
+          },
+          "unclassified": {
+            "title": "Unclassified",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "considered",
+          "classified",
+          "unclassified",
+          "by_layer",
+          "by_confidence"
+        ],
+        "title": "LayerCoverage",
+        "type": "object"
+      },
+      "LayerMix": {
+        "additionalProperties": false,
+        "description": "Layers of the considered files in a group and all its descendants.",
+        "properties": {
+          "by_layer": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Layer",
+            "type": "object"
+          },
+          "unclassified": {
+            "title": "Unclassified",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "by_layer",
+          "unclassified"
+        ],
+        "title": "LayerMix",
+        "type": "object"
+      },
+      "LensKind": {
+        "enum": [
+          "directory",
+          "package",
+          "inferred"
+        ],
+        "title": "LensKind",
+        "type": "string"
+      },
+      "LensSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "group_count": {
+            "title": "Group Count",
+            "type": "integer"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/LensKind"
+          },
+          "member_count": {
+            "title": "Member Count",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "group_count",
+          "member_count"
+        ],
+        "title": "LensSummary",
+        "type": "object"
       },
       "NodeBrief": {
         "additionalProperties": false,
@@ -1120,6 +1773,41 @@
         "title": "NodeDetail",
         "type": "object"
       },
+      "NodeLayer": {
+        "additionalProperties": false,
+        "properties": {
+          "assignment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LayerAssignment"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "node": {
+            "$ref": "#/components/schemas/NodeBrief"
+          },
+          "status": {
+            "description": "`unclassified`: considered, no layer inferred; `out_of_scope`: not considered by the layering (e.g. tests, generated code).",
+            "enum": [
+              "classified",
+              "unclassified",
+              "out_of_scope"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node",
+          "status",
+          "assignment"
+        ],
+        "title": "NodeLayer",
+        "type": "object"
+      },
       "NodeSummary": {
         "additionalProperties": false,
         "description": "A node as a tree, list or search item.",
@@ -1241,6 +1929,186 @@
           "root_key"
         ],
         "title": "PackageAttributes",
+        "type": "object"
+      },
+      "Page_DerivationRunSummary_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DerivationRunSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[DerivationRunSummary]",
+        "type": "object"
+      },
+      "Page_FindingView_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FindingView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[FindingView]",
+        "type": "object"
+      },
+      "Page_GroupEdgeView_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GroupEdgeView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[GroupEdgeView]",
+        "type": "object"
+      },
+      "Page_GroupSummary_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GroupSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[GroupSummary]",
+        "type": "object"
+      },
+      "Page_LayerAssignment_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LayerAssignment"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[LayerAssignment]",
+        "type": "object"
+      },
+      "Page_NodeBrief_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NodeBrief"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[NodeBrief]",
         "type": "object"
       },
       "Page_NodeSummary_": {
@@ -2268,6 +3136,1273 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/derivations/{run_id}": {
+      "get": {
+        "operationId": "get_run_api_v1_derivations__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DerivationRunDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Derivation run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "A derivation run: parameters, lenses, layer coverage, finding counts",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/derivations/{run_id}/findings": {
+      "get": {
+        "operationId": "list_findings_api_v1_derivations__run_id__findings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "e.g. `arch.group.cycle`",
+            "in": "query",
+            "name": "rule",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "e.g. `arch.group.cycle`",
+              "title": "Rule"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_FindingView_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Derivation run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Findings (layer violations, group cycles), in creation order",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/derivations/{run_id}/group-edges": {
+      "get": {
+        "description": "Exactly one of ``lens``, ``within`` or ``group``. Ordered by source group key,\nedge kind and target group key.",
+        "operationId": "group_edges_api_v1_derivations__run_id__group_edges_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Edges between the lens's top-level groups",
+            "in": "query",
+            "name": "lens",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Edges between the lens's top-level groups",
+              "title": "Lens"
+            }
+          },
+          {
+            "description": "Edges between this group's children",
+            "in": "query",
+            "name": "within",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Edges between this group's children",
+              "title": "Within"
+            }
+          },
+          {
+            "description": "Edges leaving and/or entering this group",
+            "in": "query",
+            "name": "group",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Edges leaving and/or entering this group",
+              "title": "Group"
+            }
+          },
+          {
+            "description": "With `group` only",
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "default": "both",
+              "description": "With `group` only",
+              "enum": [
+                "out",
+                "in",
+                "both"
+              ],
+              "title": "Direction",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Repeatable",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/EdgeKind"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repeatable",
+              "title": "Kind"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_GroupEdgeView_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Derivation run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Rolled-up dependencies between groups: one zoom level or one group",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/derivations/{run_id}/groups/by-key": {
+      "get": {
+        "operationId": "get_group_api_v1_derivations__run_id__groups_by_key_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "CIM group key, e.g. `group:components:/#app`",
+            "in": "query",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "description": "CIM group key, e.g. `group:components:/#app`",
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Derivation run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Inspect one group: provenance, evidence, metrics, layer mix, ancestors",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/derivations/{run_id}/groups/children": {
+      "get": {
+        "description": "Child groups in key order. Each carries counts, metrics and its subtree's layer\nmix, so a tree can be drawn without further requests.",
+        "operationId": "group_children_api_v1_derivations__run_id__groups_children_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Lens name, e.g. `components` or `directory`",
+            "in": "query",
+            "name": "lens",
+            "required": true,
+            "schema": {
+              "description": "Lens name, e.g. `components` or `directory`",
+              "title": "Lens",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Group to expand; omit for the top level",
+            "in": "query",
+            "name": "parent",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Group to expand; omit for the top level",
+              "title": "Parent"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_GroupSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Derivation run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Expand one group of a lens, or list the lens's top-level groups",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/derivations/{run_id}/groups/members": {
+      "get": {
+        "description": "In key order, as snapshot node summaries (inspect them with the snapshot routes).\nFiles of descendant groups are listed under those groups.",
+        "operationId": "group_members_api_v1_derivations__run_id__groups_members_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "CIM group key, e.g. `group:components:/#app`",
+            "in": "query",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "description": "CIM group key, e.g. `group:components:/#app`",
+              "title": "Group",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_NodeSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Derivation run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Files assigned directly to a group",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/derivations/{run_id}/layers": {
+      "get": {
+        "operationId": "list_layers_api_v1_derivations__run_id__layers_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "e.g. `interface`",
+            "in": "query",
+            "name": "layer",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "e.g. `interface`",
+              "title": "Layer"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_LayerAssignment_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Derivation run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Inferred layers, optionally of one layer, by node key",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/derivations/{run_id}/layers/by-node": {
+      "get": {
+        "operationId": "node_layer_api_v1_derivations__run_id__layers_by_node_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "CIM node key",
+            "in": "query",
+            "name": "node",
+            "required": true,
+            "schema": {
+              "description": "CIM node key",
+              "title": "Node",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeLayer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Derivation run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "The layer of one file: classified, unclassified or out of scope",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/derivations/{run_id}/layers/unclassified": {
+      "get": {
+        "operationId": "list_unclassified_api_v1_derivations__run_id__layers_unclassified_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_NodeBrief_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Derivation run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Files the layering considered but could not classify",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
     "/api/v1/repositories": {
       "get": {
         "description": "Ordered by host, then owner and name (ignoring case).",
@@ -2754,6 +4889,146 @@
         "summary": "Snapshot metadata, configuration, root node and statistics",
         "tags": [
           "repositories and snapshots"
+        ]
+      }
+    },
+    "/api/v1/snapshots/{snapshot_id}/derivations": {
+      "get": {
+        "operationId": "list_runs_api_v1_snapshots__snapshot_id__derivations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Snapshot Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_DerivationRunSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Snapshot not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Derivation runs of a snapshot, newest first",
+        "tags": [
+          "architecture"
         ]
       }
     },

@@ -12,23 +12,26 @@ from xraymyrepo.cim import (
     Confidence,
     EdgeKind,
     ExtractionStatus,
+    FindingSeverity,
     IssueSeverity,
+    LensKind,
     Origin,
     ReferenceKind,
     Role,
     SnapshotStatus,
     UnresolvedReason,
 )
-from xraymyrepo.cim.enums import SNAPSHOT_BASES, SNAPSHOT_NODE_KINDS
+from xraymyrepo.cim.enums import DERIVATION_BASES, SNAPSHOT_BASES, SNAPSHOT_NODE_KINDS
 
 from .conftest import MIGRATIONS
 
 SQL = (MIGRATIONS / "0001_cim_v1_snapshot_tier.sql").read_text(encoding="utf-8")
+DERIVATION_SQL = (MIGRATIONS / "0003_derivation_tier.sql").read_text(encoding="utf-8")
 
 
-def check_values(constraint: str) -> set[str]:
+def check_values(constraint: str, sql: str = SQL) -> set[str]:
     # The constraint body runs until the next table element or the end of the table.
-    match = re.search(rf"CONSTRAINT {constraint} CHECK (.*?)(?=\n\s*(?:CONSTRAINT|\);))", SQL, re.S)
+    match = re.search(rf"CONSTRAINT {constraint} CHECK (.*?)(?=\n\s*(?:CONSTRAINT|\);))", sql, re.S)
     assert match, f"constraint {constraint} not found"
     in_list = re.search(r"IN \((.*?)\)", match.group(1), re.S)
     assert in_list, f"constraint {constraint} has no IN list"
@@ -91,3 +94,31 @@ def test_snapshot_scoped_keys_lead_with_snapshot_id() -> None:
 
 def test_evidence_is_not_gin_indexed() -> None:
     assert "USING gin" not in SQL and "USING GIN" not in SQL
+
+
+@pytest.mark.parametrize(
+    ("constraint", "expected"),
+    [
+        ("derivation_run_status_check", values(SnapshotStatus)),
+        ("lens_kind_check", values(LensKind)),
+        ("group_edge_kind_check", values(EdgeKind)),
+        ("finding_severity_check", values(FindingSeverity)),
+        *[(f"{table}_basis_check", {b.value for b in DERIVATION_BASES})
+          for table in ("derived_group", "group_member", "finding")],
+        *[(f"{table}_confidence_check", values(Confidence))
+          for table in ("derived_group", "group_member", "finding", "inferred_layer")],
+    ],
+)  # fmt: skip
+def test_derivation_check_constraint_matches_enum(constraint: str, expected: set[str]) -> None:
+    assert check_values(constraint, DERIVATION_SQL) == expected
+
+
+def test_derivation_tier_shape() -> None:
+    assert "CONSTRAINT inferred_layer_basis_check CHECK (basis = 'inferred')" in DERIVATION_SQL
+    rule_required = r"CREATE TABLE inferred_layer \(.*?\n    rule\s+text NOT NULL,"
+    assert re.search(rule_required, DERIVATION_SQL, re.S)
+    assert "CREATE TYPE" not in DERIVATION_SQL.upper() and "USING gin" not in DERIVATION_SQL
+    for table in ("derived_group", "group_member", "group_edge", "finding", "inferred_layer"):
+        body = re.search(rf"CREATE TABLE {table} \((.*?)\n\);", DERIVATION_SQL, re.S)
+        assert body, table
+        assert re.search(r"PRIMARY KEY \(run_id,", body.group(1)), table

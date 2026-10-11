@@ -177,6 +177,7 @@ def test_golden_loads_completely(conn: Any, snapshot_id: int, golden: SnapshotDo
     assert conn.execute("SELECT version FROM schema_migration ORDER BY version").fetchall() == [
         ("0001_cim_v1_snapshot_tier",),
         ("0002_snapshot_children_immutable",),
+        ("0003_derivation_tier",),
     ]
 
 

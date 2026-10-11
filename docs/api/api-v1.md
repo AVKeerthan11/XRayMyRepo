@@ -1,8 +1,8 @@
 # API v1: read-only HTTP access to persisted snapshots
 
 `xraymyrepo.api` is a FastAPI application over the PostgreSQL system of record. It is shaped around software
-concepts (repositories, snapshots, the declaration tree, nodes, relationships, evidence), not around database
-tables. It is **read-only** and will power the future frontend. The machine-readable contract is
+concepts (repositories, snapshots, the declaration tree, nodes, relationships, evidence, and the derived
+architecture: groups, group dependencies, layers, findings), not around database tables. It is **read-only** and will power the future frontend. The machine-readable contract is
 [`openapi-v1.json`](openapi-v1.json): a test compares the app against it, so any contract change shows up as a
 reviewed diff (regenerate it with `XRAY_UPDATE_OPENAPI=1 pytest tests/api/test_app.py`).
 
@@ -30,18 +30,23 @@ The app starts even when the database is down; `/ready` answers 503 until it is 
 ## Layering
 
 ```text
-api/         FastAPI app, routes, response models, errors, cursors, CIM → API mapping
-persistence/ snapshots.py (write + full load), queries.py (focused reads), _rows.py (row ↔ CIM)
-cim/         the domain contract
-analyzer/    independent of persistence and the API
+api/            FastAPI app, routes, response models, errors, cursors, CIM → API mapping
+persistence/    snapshots.py, derivations.py (write + full load), queries.py, derivation_queries.py
+                (focused reads), _rows.py, _derivation_rows.py (row ↔ CIM)
+architecture/   derivation (CIM in, CIM out); orchestration.py runs load → derive → persist
+cim/            the domain contract
+analyzer/       independent of persistence and the API
 ```
 
 `tests/test_architecture.py` enforces the direction: `cim` imports nothing else, `analyzer` never imports
-`persistence`/`api`/`psycopg`/`fastapi`, `persistence` never imports `api`, `api` never imports `analyzer`.
+`persistence`/`api`/`psycopg`/`fastapi`, `architecture` imports only `cim`, `persistence` never imports `api`
+or `architecture`, and `api` imports neither `analyzer`, `architecture` nor `orchestration`: it only reads
+through persistence.
 
 * **API sessions are read-only** (`default_transaction_read_only`), on top of the snapshot immutability triggers.
 * **Only complete snapshots are served.** Every snapshot-scoped endpoint checks the snapshot first: unknown is
-  404 `snapshot_not_found`, pending or failed is 409 `snapshot_not_complete`.
+  404 `snapshot_not_found`, pending or failed is 409 `snapshot_not_complete`. Likewise every run-scoped
+  endpoint checks the run: 404 `derivation_not_found`, 409 `derivation_not_complete`.
 * **Response models are the API's own** (`api/models`). CIM *value types* (enums, `SourceSpan`, `Provenance`,
   evidence variants, per-kind attribute models, `AnalysisConfig`, `Producer`, `CoverageDeclaration`,
   `UnresolvedReference`, `ExtractionIssue`, `RepositoryRef`) appear inside them unchanged, so a change to one of
@@ -68,6 +73,47 @@ All under `/api/v1`, except the two service endpoints. All are `GET`.
 | `/snapshots/{id}/diagnostics` | Unresolved references and issues around a node | `node` | `Diagnostics` |
 
 \* repeatable (`?kind=file&kind=directory`).
+
+### Architecture intelligence
+
+Derived conclusions have their own routes, so they can never be mistaken for snapshot facts. Concepts, rules
+and confidence: docs/architecture/architecture-v1.md. `{run}` is `/derivations/{run_id}`.
+
+| Path | Purpose | Parameters | Response |
+| --- | --- | --- | --- |
+| `/snapshots/{id}/derivations` | Derivation runs of a snapshot, newest first (any status) | `limit`, `cursor` | `Page[DerivationRunSummary]` |
+| `{run}` | Params, lenses (group and member counts), layer coverage, finding counts per rule | – | `DerivationRunDetail` |
+| `{run}/groups/children` | A lens's top-level groups, or one group's children | `lens` (required), `parent` (group key), `limit`, `cursor` | `Page[GroupSummary]` |
+| `{run}/groups/by-key` | One group with provenance, evidence and ancestors | `key` | `GroupDetail` |
+| `{run}/groups/members` | Files assigned directly to a group | `group`, `limit`, `cursor` | `Page[NodeSummary]` |
+| `{run}/group-edges` | Rolled-up dependencies: a lens's top level, one zoom level, or one group | exactly one of `lens`, `within`, `group`; `direction` (with `group`), `kind`*, `limit`, `cursor` | `Page[GroupEdgeView]` |
+| `{run}/layers` | Inferred layers by node key | `layer`, `limit`, `cursor` | `Page[LayerAssignment]` |
+| `{run}/layers/by-node` | One file's layer status | `node` | `NodeLayer` |
+| `{run}/layers/unclassified` | Files considered but not classified | `limit`, `cursor` | `Page[NodeBrief]` |
+| `{run}/findings` | Layer violations and group cycles, in creation order | `rule`, `limit`, `cursor` | `Page[FindingView]` |
+
+**Response semantics:**
+
+* **Group keys** (`group:<lens>:<local>`, e.g. `group:components:pkg:pypi:acme-backend#app.users`) are query
+  parameters and must be URL-encoded like node keys.
+* **Inferred results say so.**
+  * Groups and memberships of the `components` lens, layers and findings carry `basis: "inferred"`, a
+    `confidence`, `provenance.rule` and `derived` evidence citing snapshot node keys and edge refs.
+  * `directory` groups are `observed`.
+  * `LensSummary.kind` says whether a whole lens is inferred.
+* **`GroupSummary`** carries what a tree item needs without further requests:
+  * `child_group_count` and `member_count` (direct members);
+  * `metrics` (`files` including descendants, `internal_edges`, `afferent`, `efferent`, `instability`);
+  * `layer_mix` (layers of the considered files in the subtree, plus `unclassified`).
+* **`GroupEdgeView`** keeps the CIM rollup unchanged: `count` and `basis_counts` (never averaged), plus up to
+  20 `sample_edge_refs` to open with `/snapshots/{id}/edges/by-ref`.
+* **`NodeLayer.status`** has three values:
+  * `classified`: with the `assignment`;
+  * `unclassified`: considered, no layer could be inferred, a valid outcome;
+  * `out_of_scope`: not considered, e.g. tests, generated code, other languages.
+* **`LayerAssignment`** carries `node_key` only. Resolve names with the snapshot routes or `layers/by-node`.
+* **`groups/children` requires `lens`,** even with `parent`. A parent of another lens is 404
+  `group_not_found`; the lens is never switched silently.
 
 **Keys are query parameters.** CIM keys contain `/`, `#`, `:`, spaces, `{}` and `@`
 (`endpoint:http:GET /users/{id}@/`), so they never appear in paths. Clients must URL-encode them; in particular
@@ -98,11 +144,16 @@ totals; where the UI needs a number, it is part of the item (`child_count`) or t
 * **Direction is never inverted.** Each `Relationship` carries the stored `source_key` → `target_key`;
   `direction` only says which end the requested node is. There are no synthesized inverse kinds. A recursive
   `CALLS` self-loop appears once as `out` and once as `in`.
+* **Group trees and zoom.** `{run}/groups/children?lens=components` → expand groups with `parent=<group key>`;
+  each level is in key order. `{run}/group-edges?within=<group key>` returns the dependencies between that
+  group's children (one zoom level); `?lens=<lens>` those between its top-level groups; `?group=<key>` one
+  group's own. The top level plus every `within` partition all group edges. `groups/members` lists a group's
+  own files as node summaries, which lead back into the snapshot routes.
 * **Evidence** (≤ 20 items per record, by contract) comes with `NodeDetail` (node evidence and each
   classification's evidence) and `EdgeDetail`. Span evidence gives file key and position; derived evidence gives
   node keys and edge refs to navigate to. Source text itself is not served (see Limitations).
 
-Future graph views (neighbourhoods, subtree rollups, architecture, impact) will be new paths, for example under
+Further views (node neighbourhoods, impact analysis) will be new paths, for example under
 `/snapshots/{id}/graph/…`; nothing above needs to change for them.
 
 ## Errors
@@ -117,20 +168,22 @@ Every error is RFC 9457 `application/problem+json`:
 
 | Status | `code` |
 | --- | --- |
-| 404 | `repository_not_found`, `snapshot_not_found`, `node_not_found` (also for `parent`/`node`), `edge_not_found`, `not_found` (no such route) |
-| 409 | `snapshot_not_complete` |
-| 422 | `validation_error` (with `errors[]`: `loc`, `msg`, `type`); `invalid_key` (not a well-formed CIM key, so it can never exist) |
+| 404 | `repository_not_found`, `snapshot_not_found`, `node_not_found` (also for `parent`/`node`), `edge_not_found`, `derivation_not_found`, `lens_not_found`, `group_not_found`, `not_found` (no such route) |
+| 409 | `snapshot_not_complete`, `derivation_not_complete` |
+| 422 | `validation_error` (with `errors[]`: `loc`, `msg`, `type`); `invalid_key` (not a well-formed CIM node or group key, so it can never exist); `invalid_parameters` (`group-edges` without exactly one of `lens`/`within`/`group`, or `direction` without `group`) |
 | 400 | `invalid_cursor` |
 | 405 | `method_not_allowed` |
 | 503 | `database_unavailable` |
 | 500 | `internal_error` (no details disclosed; logged server-side) |
 
-Empty results are `200` with an empty page: a leaf has no children, an unconnected node has no relationships.
+Empty results are `200` with an empty page: a leaf has no children, an unconnected node has no relationships,
+a project group has no direct members.
 
 ## Queries and cost
 
 Each request runs a fixed number of SQL statements, independent of page size (asserted in
-`tests/api/test_api_db.py::test_query_budget`), all on the snapshot-tier indexes of migration 0001:
+`tests/api/test_api_db.py::test_query_budget` and `tests/api/test_derivations_api_db.py::test_query_budget`),
+on the indexes of migrations 0001 and 0003:
 
 | Endpoint | Statements | Main indexes |
 | --- | --- | --- |
@@ -138,18 +191,28 @@ Each request runs a fixed number of SQL statements, independent of page size (as
 | nodes/by-key | 7 | `node_key_unique`, `node_parent_idx`, `edge_unique`, `edge_target_idx`, … |
 | relationships | 3 | `edge_unique` (out), `edge_target_idx` (in) |
 | search | 4 | none for name matching: a scan of the snapshot's nodes |
+| `{run}` | 6 | `derivation_run` primary key, `lens`, `finding_rule_idx` |
+| `{run}/groups/children`, `groups/by-key` | 6 | `derived_group_key_unique`, `derived_group_parent_idx`, `group_member_group_idx`, `node_metric_group_idx` |
+| `{run}/groups/members` | 5 | `group_member_group_idx`, then the snapshot node indexes |
+| `{run}/group-edges` | 3 | `group_edge` primary key (out), `group_edge_target_idx` (in) |
+| `{run}/layers/by-node` | 3, or 4 for a file without a layer | `inferred_layer` primary key, `node_metric_node_idx` |
+| `{run}/layers`, `layers/unclassified`, `findings`, `/snapshots/{id}/derivations` | 2 | `inferred_layer_layer_idx`, `finding` primary key, `derivation_run_snapshot_idx` |
 
 ## Limitations
 
 * **Name search is not indexed.** Case-insensitive substring matching scans one snapshot's nodes; key prefixes
   use `node_key_unique`. Fine for snapshots of the expected size (the generated 8 000-node test answers in
-  milliseconds); a `pg_trgm` index (migration 0003) is the planned remedy if measurements require it. Case
+  milliseconds); a `pg_trgm` index in a later migration is the planned remedy if measurements require it. Case
   folding of keys is ASCII-only (keys are `COLLATE "C"`).
 * **"Latest" means most recently created complete snapshot**, not newest commit: commit dates and branches are
   not stored.
 * **No source text.** Spans and `blob_sha` are exposed; serving file content needs a source/blob store
   decision.
-* **No writes.** Analysis and persistence run outside the API (an `xray persist` command is a planned
-  follow-up).
+* **No writes.** Analysis, persistence and derivation run outside the API: derivations through
+  `xraymyrepo.orchestration.derive_architecture`. CLI commands for persisting and deriving are planned
+  follow-ups.
+* **Architecture results are per run.** There is no "latest derivation" shortcut: list a snapshot's runs
+  and pick one (by algorithm, version and `params_hash`). Dependencies on external packages are not rolled
+  up between groups (see docs/architecture/architecture-v1.md, Limitations).
 * A malformed `snapshot_id` is reported as 422 only when the database is reachable: the connection is acquired
   before parameters are validated, so with the database down it is 503.

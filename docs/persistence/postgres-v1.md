@@ -1,8 +1,9 @@
-# Persistence v1: PostgreSQL snapshot store
+# Persistence v1: PostgreSQL snapshot and derivation store
 
-PostgreSQL is the system of record for completed CIM snapshots. `xraymyrepo.persistence` stores a validated
-`SnapshotDocument` in the snapshot-tier schema (`db/migrations`) and loads it back. It does not change the CIM:
-no new kinds, fields or tables. It uses psycopg 3 and plain parameterized SQL, with no ORM.
+PostgreSQL is the system of record for completed CIM snapshots and for the derivations computed from them.
+`xraymyrepo.persistence` stores a validated `SnapshotDocument` (snapshot tier, migrations 0001–0002) or
+`Derivation` (derivation tier, migration 0003) and loads it back. It does not change the CIM: no new kinds or
+fields. It uses psycopg 3 and plain parameterized SQL, with no ORM. Derivations: see "Derivations" below.
 
 ```text
 repository → analyze() → SnapshotDocument → persist_snapshot() → PostgreSQL → load_snapshot() → SnapshotDocument
@@ -124,6 +125,61 @@ The persistence API has no update path. Persisting an identity that already exis
 Deleting a whole snapshot (`DELETE FROM snapshot`) still cascades, as 0001 declares. That removes the
 snapshot as a unit (retention); it is not a change to what a kept snapshot says.
 
+## Derivations (migration 0003)
+
+A `Derivation` (CIM §8) is computed from one complete snapshot by `xraymyrepo.architecture`
+(docs/architecture/architecture-v1.md). Persistence stores and reads it without knowing how it was computed,
+and never imports `architecture`.
+
+| Function | Does |
+| --- | --- |
+| `persist_derivation(conn, snapshot_id, derivation, params) -> int` | Stores the run as **complete** in one transaction; returns its id. |
+| `load_derivation(conn, run_id) -> Derivation` | Loads a complete run, validated, in canonical order (eight queries). |
+| `find_derivation_run(conn, snapshot_id, algorithm, algorithm_version, params_hash) -> StoredRun \| None` | Looks a run up by identity, any status. |
+
+Errors: `DerivationRunExistsError` (carries `run_id` and `status`), `DerivationRunNotFoundError`,
+`DerivationRunNotCompleteError`, and the snapshot errors above.
+
+* **Identity.** `(snapshot, algorithm, algorithm_version, params_hash)`, unique in `derivation_run`. A
+  second persist of the same identity raises `DerivationRunExistsError` and changes nothing. Other params
+  or another algorithm version make a separate run.
+* **Checked before writing.** `params` is stored with the run and must hash (sha256 of its canonical JSON)
+  to the run's `params_hash`. The snapshot must exist, be complete and be the one the derivation names.
+* **Lifecycle.** As for snapshots: `INSERT derivation_run` as `pending`, one `COPY` per table (`lens`,
+  `derived_group` with ids reserved first so parents are known, `group_member`, `group_edge`,
+  `node_metric`, `finding`, `inferred_layer`), then `pending → complete`, all in one transaction. A failure
+  from Python or the database leaves no row behind, and other sessions never see a half-written run.
+* **Round trip.** `load_derivation(conn, persist_derivation(conn, sid, d, params)) == d.canonical()`.
+* **Database guarantees:**
+  * `derivation_run_require_complete_snapshot`: runs are created from complete snapshots only.
+  * `derivation_run_guard_immutable` and `derivation_child_guard_immutable` (the 0002 pattern, SQLSTATE
+    `23000`): a finished run and all its rows never change.
+  * `inferred_layer` requires basis `inferred` and a rule.
+  * Metric values must be finite (`NaN` is listed explicitly, because PostgreSQL treats `NaN = NaN` as true).
+* **Deleting a snapshot removes its runs.** The three node references (`group_member`, `node_metric`,
+  `inferred_layer` → `node`) are `DEFERRABLE INITIALLY DEFERRED`. The snapshot's nodes and, through
+  `derivation_run`, the rows citing them are deleted by two cascades, and the references are checked at
+  commit, after both.
+
+### Derivation read queries (`xraymyrepo.persistence.derivation_queries`)
+
+The derivation-tier counterpart of `queries`, for the API. It works by group and node **key** with a bounded
+number of indexed statements, and pages by keyset:
+
+* **Runs.** `list_runs`, `get_run`, `run_params`, `run_lenses`, `layer_coverage`, `finding_counts`.
+* **Groups.** `lens_exists`, `get_group`, `group_children`, `group_ancestors`, `group_counts`,
+  `group_metrics`, `layer_mix` (layers of the considered files in a subtree), `group_members` (CIM nodes).
+* **Group edges.** `group_edges` with `lens=` (top level), `within=` (between a group's children: one zoom
+  level) or `group=` plus `direction`.
+* **Layers and findings.** `get_layer`, `is_considered`, `list_layers`, `list_unclassified`, `list_findings`.
+
+**Unclassified is explicit.** A file the layering considered carries the metric `layer_considered`:
+- considered with an inferred layer is classified;
+- considered without one is unclassified;
+- without the metric, the file was out of scope.
+
+Row-to-record mapping (`_derivation_rows.py`) is shared with `load_derivation`.
+
 ## Decisions (2026-10-08)
 
 1. **One transaction.** Pending, loading and complete all happen in one transaction; nothing is left behind
@@ -136,6 +192,28 @@ snapshot as a unit (retention); it is not a change to what a kept snapshot says.
    owner or name differs only in case from the stored row is rejected (`RepositoryIdentityError`) rather
    than silently stored under the other spelling, which would break the round trip.
 
+## Running the tests
+
+```sh
+pip install -e .[dev,api,db-tests]
+pytest                                   # no database: the PostgreSQL tests are skipped
+export XRAY_TEST_DATABASE_URL=postgresql://postgres:<password>@localhost:5432/xraytest
+pytest                                   # everything, against PostgreSQL 16
+ruff check . && ruff format --check . && mypy --strict
+```
+
+* **A disposable database is required.** `XRAY_TEST_DATABASE_URL` must point at an **empty, disposable**
+  PostgreSQL 16 database. Every database test module starts by dropping and recreating the `public` schema
+  and applying `db/migrations/*.sql` in order (`tests/conftest.py::reset_database`). Never point it at a
+  database you want to keep.
+  A throwaway server works well, for example `docker run -e POSTGRES_PASSWORD=… -e POSTGRES_DB=xraytest
+  -p 5432:5432 postgres:16`.
+* **Without the variable** (or without `psycopg`), the database tests are skipped, not failed.
+* **Slow tests.** `-m "not slow"` deselects the large generated-repository tests.
+* **Reviewed snapshots.** Regenerate them deliberately and review the diff:
+  * the golden derivation: `XRAY_UPDATE_GOLDEN=1 pytest tests/architecture`;
+  * the OpenAPI contract: `XRAY_UPDATE_OPENAPI=1 pytest tests/api/test_app.py`.
+
 ## Limitations
 
 * **Memory.** Loading materializes the whole snapshot in memory, which is also what `SnapshotDocument`
@@ -145,3 +223,5 @@ snapshot as a unit (retention); it is not a change to what a kept snapshot says.
   `cim_schema_version` fails validation on load; no migration of stored documents exists.
 * **Re-running migrations.** Migrations are applied by the caller (the tests apply all of
   `db/migrations/*.sql` in order). There is no migration runner.
+* **Derivations load whole.** `load_derivation` materializes the whole run; the API uses
+  `derivation_queries` instead. Runs cannot be deleted on their own, only with their snapshot.

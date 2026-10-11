@@ -237,7 +237,11 @@ A snapshot's identity is `(repository, commit_sha, extractor_version, config_has
 * Repository-level history (commits, file changes, contributors) is not part of the snapshot and not part of
   this migration.
 
-## 8. Derivation layer (contract only in v1)
+## 8. Derivation layer
+
+Implemented by architecture intelligence v1 (`xraymyrepo.architecture`, docs/architecture/architecture-v1.md):
+a `directory` lens and an inferred `components` lens, group edges, group metrics, inferred layers and two
+finding rules, stored by migration 0003. The contract below is unchanged; `Derivation.canonical()` only orders it.
 
 `DerivationRun(snapshot, algorithm, algorithm_version, params_hash, status)` produces:
 
@@ -291,7 +295,8 @@ are `NodeRef`, `EdgeRef` or `SpanRef`.
 * `CALLS` extraction (schema only), `USES_TYPE`, `REFERENCES`, `READS_FROM`, `WRITES_TO`.
 * Variables, fields and decorators as nodes; external symbols as nodes; anonymous-function nodes.
 * Resource nodes (databases, queues, external services); service or deployment inference.
-* Clustering, layering inference and computed lenses; derivation and interpretation database tables.
+* Graph clustering and the `package` lens; interpretation database tables. (Computed lenses, layering
+  inference and derivation tables exist since architecture intelligence v1: §8.)
 * Fuzzy lineage, git history ingestion, blame, contributors. Endpoint lineage across package renames.
 * Partial classes or declarations spanning files (would break the single declaration tree).
 * Neo4j or any graph database. PostgreSQL is the system of record; graph traversal will run in memory over
@@ -313,7 +318,7 @@ are `NodeRef`, `EdgeRef` or `SpanRef`.
 7. **Repository scope token** is `/` (`endpoint:http:GET /health@/`).
 8. **Golden fixture** carries no `layer` classifications until layer convention rules are agreed.
 
-## Appendix: database (snapshot tier)
+## Appendix: database
 
 Tables: `repository`, `producer`, `snapshot`, `snapshot_producer`, `node`, `edge`, `classification`,
 `unresolved_reference`, `extraction_issue`, `schema_migration`.
@@ -332,3 +337,9 @@ Tables: `repository`, `producer`, `snapshot`, `snapshot_producer`, `node`, `edge
   resolve to one row (`node_key_unique`, `snapshot_producer_name_key`).
 * Migration 0002 (`snapshot_child_guard_immutable`) extends the snapshot guard to the rows a snapshot owns:
   no insert, update or delete once the snapshot is not `pending`. Persistence: docs/persistence/postgres-v1.md.
+* Migration 0003 adds the derivation tier, tables only: `derivation_run`, `lens`, `derived_group`, `group_member`,
+  `group_edge`, `node_metric`, `finding`, `inferred_layer`. Keys lead with `run_id`; node references are
+  `(snapshot_id, node_id)` tied to the run's snapshot; evidence and finding subjects are JSONB of keys;
+  `inferred_layer.basis` is `CHECK (basis = 'inferred')` with a required rule. Runs are created from complete
+  snapshots only and, like snapshots, are immutable once finished (`derivation_run_guard_immutable`,
+  `derivation_child_guard_immutable`).

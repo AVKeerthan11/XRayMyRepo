@@ -1,16 +1,25 @@
 """CIM and persistence records -> API models. The only place the two vocabularies meet.
 
-The mappers are pure; ``summaries`` additionally fetches what a page of node
-summaries needs (child counts and tags) in two batched queries, whatever the page
-size.
+The mappers are pure; ``summaries`` and ``group_summaries`` additionally fetch what a
+page of summaries needs in a fixed number of batched queries, whatever the page size.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
 
-from xraymyrepo.cim import Classification, ClassificationFacet, Edge, EdgeKind
+from xraymyrepo.cim import (
+    Classification,
+    ClassificationFacet,
+    Edge,
+    EdgeKind,
+    Finding,
+    Group,
+    GroupEdge,
+    InferredLayer,
+)
 from xraymyrepo.cim.nodes import Node
+from xraymyrepo.persistence import derivation_queries as dq
 from xraymyrepo.persistence import queries
 from xraymyrepo.persistence.queries import NodeBrief as NodeBriefRecord
 
@@ -154,3 +163,112 @@ def _edge_fields(e: Edge) -> dict[str, object]:
         "contested": e.contested,
         "attributes": e.attributes,
     }
+
+
+# ---------------------------------------------------------------------------
+# Architecture intelligence (derivation runs)
+
+
+def run_summary(record: dq.RunRecord) -> models.DerivationRunSummary:
+    return models.DerivationRunSummary(
+        id=record.id,
+        snapshot_id=record.snapshot_id,
+        algorithm=record.algorithm,
+        algorithm_version=record.algorithm_version,
+        params_hash=record.params_hash,
+        status=record.status,
+        failure_reason=record.failure_reason,
+        created_at=record.created_at,
+        finished_at=record.finished_at,
+    )
+
+
+def lens_summary(lens: dq.LensRecord) -> models.LensSummary:
+    return models.LensSummary(
+        name=lens.name, kind=lens.kind, group_count=lens.groups, member_count=lens.members
+    )
+
+
+def layer_coverage(coverage: dq.LayerCoverage) -> models.LayerCoverage:
+    return models.LayerCoverage(
+        considered=coverage.considered,
+        classified=coverage.classified,
+        unclassified=coverage.unclassified,
+        by_layer=coverage.by_layer,
+        by_confidence=coverage.by_confidence,
+    )
+
+
+def group_summary(
+    group: Group, counts: tuple[int, int], metrics: dict[str, float], mix: dq.LayerMix
+) -> models.GroupSummary:
+    return models.GroupSummary(
+        key=group.key,
+        lens=group.lens,
+        label=group.label,
+        parent_key=group.parent_key,
+        basis=group.basis,
+        confidence=group.confidence,
+        child_group_count=counts[0],
+        member_count=counts[1],
+        metrics=metrics,
+        layer_mix=models.LayerMix(by_layer=mix.by_layer, unclassified=mix.unclassified),
+    )
+
+
+def group_summaries(
+    conn: Connection, run_id: int, groups: Sequence[Group]
+) -> list[models.GroupSummary]:
+    keys = [g.key for g in groups]
+    if not keys:
+        return []
+    counts = dq.group_counts(conn, run_id, keys)
+    metrics = dq.group_metrics(conn, run_id, keys)
+    mixes = dq.layer_mix(conn, run_id, keys)
+    return [group_summary(g, counts[g.key], metrics.get(g.key, {}), mixes[g.key]) for g in groups]
+
+
+def group_detail(
+    summary: models.GroupSummary, group: Group, ancestors: Sequence[dq.GroupBrief]
+) -> models.GroupDetail:
+    return models.GroupDetail(
+        **dict(summary),
+        provenance=group.provenance,
+        evidence=list(group.evidence),
+        ancestors=[models.GroupBrief(key=a.key, label=a.label) for a in ancestors],
+    )
+
+
+def group_edge_view(edge: GroupEdge) -> models.GroupEdgeView:
+    return models.GroupEdgeView(
+        source_group_key=edge.source_group_key,
+        target_group_key=edge.target_group_key,
+        edge_kind=edge.edge_kind,
+        count=edge.count,
+        basis_counts=edge.basis_counts,
+        sample_edge_refs=list(edge.sample_edge_refs),
+    )
+
+
+def layer_assignment(layer: InferredLayer) -> models.LayerAssignment:
+    return models.LayerAssignment(
+        node_key=layer.node_key,
+        layer=layer.layer,
+        basis=layer.basis,
+        confidence=layer.confidence,
+        provenance=layer.provenance,
+        evidence=list(layer.evidence),
+    )
+
+
+def finding_view(finding_id: int, finding: Finding) -> models.FindingView:
+    return models.FindingView(
+        id=finding_id,
+        rule=finding.rule,
+        severity=finding.severity,
+        subject_keys=list(finding.subject_keys),
+        message=finding.message,
+        basis=finding.basis,
+        confidence=finding.confidence,
+        evidence=list(finding.evidence),
+    )

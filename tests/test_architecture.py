@@ -1,4 +1,10 @@
-"""Layering rules: cim <- analyzer, cim <- persistence <- api. Checked on imports."""
+"""Layering rules, checked on imports:
+
+cim <- analyzer
+cim <- architecture                 (pure derivation: CIM in, CIM out)
+cim <- persistence <- api           (the API only reads, through persistence)
+architecture + persistence <- orchestration (load -> derive -> persist)
+"""
 
 from __future__ import annotations
 
@@ -11,13 +17,18 @@ from .conftest import ROOT
 
 PACKAGE = ROOT / "src" / "xraymyrepo"
 
+_UPPER = {"xraymyrepo.architecture", "xraymyrepo.orchestration"}
+_WEB = {"fastapi", "starlette"}
+
 # Imports (top-level module names or xraymyrepo subpackages) each layer must not use.
 FORBIDDEN = {
     "cim": {"xraymyrepo.analyzer", "xraymyrepo.persistence", "xraymyrepo.api", "psycopg",
-            "fastapi", "starlette"},
-    "analyzer": {"xraymyrepo.persistence", "xraymyrepo.api", "psycopg", "fastapi", "starlette"},
-    "persistence": {"xraymyrepo.analyzer", "xraymyrepo.api", "fastapi", "starlette"},
-    "api": {"xraymyrepo.analyzer"},
+            *_UPPER, *_WEB},
+    "analyzer": {"xraymyrepo.persistence", "xraymyrepo.api", "psycopg", *_UPPER, *_WEB},
+    "architecture": {"xraymyrepo.analyzer", "xraymyrepo.persistence", "xraymyrepo.api",
+                     "xraymyrepo.orchestration", "psycopg", *_WEB},
+    "persistence": {"xraymyrepo.analyzer", "xraymyrepo.api", *_UPPER, *_WEB},
+    "api": {"xraymyrepo.analyzer", *_UPPER},
 }  # fmt: skip
 
 
@@ -52,3 +63,10 @@ def test_layer_imports(layer: str) -> None:
 def test_relative_imports_are_resolved() -> None:
     names = imports_of(PACKAGE / "api" / "routes" / "nodes.py")
     assert "xraymyrepo.api.db" in names and "xraymyrepo.api" in names
+
+
+def test_orchestration_imports() -> None:
+    names = imports_of(PACKAGE / "orchestration.py")
+    assert {"xraymyrepo.architecture", "xraymyrepo.persistence"} <= names
+    for forbidden in ("xraymyrepo.api", "xraymyrepo.analyzer", "fastapi"):
+        assert not any(n == forbidden or n.startswith(forbidden + ".") for n in names)

@@ -14,11 +14,13 @@ Layers computed from the graph (``InferredLayer``) live here too, always with
 basis ``inferred``. The snapshot only holds heuristic ``layer`` classifications
 (a convention matched), so an inferred layer can never pass for a snapshot fact.
 
-Contract only: no lens is computed in CIM v1.
+This module is the contract; ``xraymyrepo.architecture`` computes derivations that
+satisfy it (docs/architecture/architecture-v1.md).
 """
 
 from __future__ import annotations
 
+import json
 import math
 
 from pydantic import Field, field_validator, model_validator
@@ -255,6 +257,33 @@ class Derivation(CIMModel):
         if len(set(layered)) != len(layered):
             raise ValueError("a node has at most one inferred layer per derivation run")
         return self
+
+    # -- canonical form ------------------------------------------------------
+
+    def canonical(self) -> Derivation:
+        """The same derivation with every collection in a deterministic order."""
+        return self.model_copy(
+            update={
+                "lenses": tuple(sorted(self.lenses, key=lambda x: x.name)),
+                "groups": tuple(sorted(self.groups, key=lambda g: g.key)),
+                "members": tuple(sorted(self.members, key=lambda m: (m.group_key, m.node_key))),
+                "group_edges": tuple(
+                    sorted(
+                        self.group_edges,
+                        key=lambda e: (e.source_group_key, e.edge_kind, e.target_group_key),
+                    )
+                ),
+                "metrics": tuple(sorted(self.metrics, key=lambda m: (m.node_key, m.metric))),
+                "findings": tuple(
+                    sorted(self.findings, key=lambda f: (f.rule, f.subject_keys, f.message))
+                ),
+                "layers": tuple(sorted(self.layers, key=lambda x: x.node_key)),
+            }
+        )
+
+    def to_canonical_json(self) -> str:
+        data = self.canonical().model_dump(mode="json", exclude_defaults=True)
+        return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
 
 
 def _check_acyclic(groups: dict[str, Group]) -> None:

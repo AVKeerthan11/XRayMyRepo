@@ -1,10 +1,12 @@
 """Every error is an RFC 9457 problem (``application/problem+json``) with a stable code.
 
 404  repository_not_found, snapshot_not_found, node_not_found, edge_not_found,
-     not_found (no such route)
+     derivation_not_found, lens_not_found, group_not_found, not_found (no such route)
 409  snapshot_not_complete   the snapshot is pending or failed; its data is not served
+409  derivation_not_complete the derivation run is pending or failed
 422  validation_error        bad parameters (``errors`` lists them)
-422  invalid_key             not a well-formed CIM node key, so it can never exist
+422  invalid_parameters      a combination of parameters that cannot be answered
+422  invalid_key             not a well-formed CIM node or group key, so it can never exist
 400  invalid_cursor
 503  database_unavailable
 500  internal_error          nothing about the failure is disclosed
@@ -69,9 +71,11 @@ def _problem_content() -> dict[str, Any]:
     return {PROBLEM_MEDIA_TYPE: {"schema": {"$ref": "#/components/schemas/Problem"}}}
 
 
-def responses(*statuses: int) -> dict[int | str, dict[str, Any]]:
+def responses(
+    *statuses: int, conflict: str = "Snapshot not complete"
+) -> dict[int | str, dict[str, Any]]:
     """OpenAPI documentation of the problems a route can answer with."""
-    descriptions = {400: "Invalid cursor", 404: "Not found", 409: "Snapshot not complete",
+    descriptions = {400: "Invalid cursor", 404: "Not found", 409: conflict,
                     422: "Invalid parameters or key", 503: "Database unavailable"}  # fmt: skip
     return {
         s: {"model": Problem, "description": descriptions[s], "content": _problem_content()}

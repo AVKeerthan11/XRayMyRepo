@@ -1,0 +1,1889 @@
+{
+  "run": {
+    "snapshot": {
+      "repository": {
+        "host": "github.com",
+        "owner": "xraymyrepo",
+        "name": "golden-fixture"
+      },
+      "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+      "extractor_version": "1.0.0",
+      "config_hash": "sha256:a5d6cb9635a6c6c6712120de6a01e3d949e5d239e88f48ec6713881bfe7206ef"
+    },
+    "algorithm": "architecture",
+    "algorithm_version": "1.0.0",
+    "params_hash": "sha256:9a649dc7d609405191110055defb2400e72ffc747ad97f0b7419919006e9d801",
+    "status": "complete"
+  },
+  "lenses": [
+    {
+      "name": "components",
+      "kind": "inferred"
+    },
+    {
+      "name": "directory",
+      "kind": "directory"
+    }
+  ],
+  "groups": [
+    {
+      "key": "group:components:pkg:pypi:acme-backend",
+      "label": "acme-backend",
+      "basis": "inferred",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.components.python_project"
+      },
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.components.python_project"
+          },
+          "type": "derived",
+          "node_keys": [
+            "pkg:pypi:acme-backend",
+            "backend/pyproject.toml"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:components:pkg:pypi:acme-backend#app",
+      "parent_key": "group:components:pkg:pypi:acme-backend",
+      "label": "app",
+      "basis": "inferred",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.components.python_package"
+      },
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.components.python_package"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app",
+            "backend/app/__init__.py"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:components:pkg:pypi:acme-backend#app.generated",
+      "parent_key": "group:components:pkg:pypi:acme-backend",
+      "label": "app.generated",
+      "basis": "inferred",
+      "confidence": "medium",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.components.python_package"
+      },
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.components.python_package"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app/generated"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:components:pkg:pypi:acme-backend#app.users",
+      "parent_key": "group:components:pkg:pypi:acme-backend",
+      "label": "app.users",
+      "basis": "inferred",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.components.python_package"
+      },
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.components.python_package"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app/users",
+            "backend/app/users/__init__.py"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:components:pkg:pypi:acme-backend#tests",
+      "parent_key": "group:components:pkg:pypi:acme-backend",
+      "label": "tests",
+      "basis": "inferred",
+      "confidence": "medium",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.components.python_package"
+      },
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.components.python_package"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/tests"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:directory:/",
+      "label": "golden-fixture",
+      "basis": "observed",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.lens.directory"
+      },
+      "evidence": [
+        {
+          "basis": "observed",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.lens.directory"
+          },
+          "type": "derived",
+          "node_keys": [
+            "/"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:directory:backend",
+      "parent_key": "group:directory:/",
+      "label": "backend",
+      "basis": "observed",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.lens.directory"
+      },
+      "evidence": [
+        {
+          "basis": "observed",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.lens.directory"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:directory:backend/app",
+      "parent_key": "group:directory:backend",
+      "label": "app",
+      "basis": "observed",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.lens.directory"
+      },
+      "evidence": [
+        {
+          "basis": "observed",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.lens.directory"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:directory:backend/app/generated",
+      "parent_key": "group:directory:backend/app",
+      "label": "generated",
+      "basis": "observed",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.lens.directory"
+      },
+      "evidence": [
+        {
+          "basis": "observed",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.lens.directory"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app/generated"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:directory:backend/app/users",
+      "parent_key": "group:directory:backend/app",
+      "label": "users",
+      "basis": "observed",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.lens.directory"
+      },
+      "evidence": [
+        {
+          "basis": "observed",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.lens.directory"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app/users"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:directory:backend/tests",
+      "parent_key": "group:directory:backend",
+      "label": "tests",
+      "basis": "observed",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.lens.directory"
+      },
+      "evidence": [
+        {
+          "basis": "observed",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.lens.directory"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/tests"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:directory:frontend",
+      "parent_key": "group:directory:/",
+      "label": "frontend",
+      "basis": "observed",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.lens.directory"
+      },
+      "evidence": [
+        {
+          "basis": "observed",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.lens.directory"
+          },
+          "type": "derived",
+          "node_keys": [
+            "frontend"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:directory:frontend/src",
+      "parent_key": "group:directory:frontend",
+      "label": "src",
+      "basis": "observed",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.lens.directory"
+      },
+      "evidence": [
+        {
+          "basis": "observed",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.lens.directory"
+          },
+          "type": "derived",
+          "node_keys": [
+            "frontend/src"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:directory:frontend/src/orders",
+      "parent_key": "group:directory:frontend/src",
+      "label": "orders",
+      "basis": "observed",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.lens.directory"
+      },
+      "evidence": [
+        {
+          "basis": "observed",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.lens.directory"
+          },
+          "type": "derived",
+          "node_keys": [
+            "frontend/src/orders"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:directory:frontend/vendor",
+      "parent_key": "group:directory:frontend",
+      "label": "vendor",
+      "basis": "observed",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.lens.directory"
+      },
+      "evidence": [
+        {
+          "basis": "observed",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.lens.directory"
+          },
+          "type": "derived",
+          "node_keys": [
+            "frontend/vendor"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "group:directory:scripts",
+      "parent_key": "group:directory:/",
+      "label": "scripts",
+      "basis": "observed",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.lens.directory"
+      },
+      "evidence": [
+        {
+          "basis": "observed",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.lens.directory"
+          },
+          "type": "derived",
+          "node_keys": [
+            "scripts"
+          ]
+        }
+      ]
+    }
+  ],
+  "members": [
+    {
+      "group_key": "group:components:pkg:pypi:acme-backend#app",
+      "node_key": "backend/app/__init__.py",
+      "basis": "inferred",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:components:pkg:pypi:acme-backend#app",
+      "node_key": "backend/app/db.py",
+      "basis": "inferred",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:components:pkg:pypi:acme-backend#app",
+      "node_key": "backend/app/legacy.py",
+      "basis": "inferred",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:components:pkg:pypi:acme-backend#app",
+      "node_key": "backend/app/main.py",
+      "basis": "inferred",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:components:pkg:pypi:acme-backend#app",
+      "node_key": "backend/app/plugins.py",
+      "basis": "inferred",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:components:pkg:pypi:acme-backend#app.generated",
+      "node_key": "backend/app/generated/user_pb2.py",
+      "basis": "inferred",
+      "confidence": "medium"
+    },
+    {
+      "group_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "node_key": "backend/app/users/__init__.py",
+      "basis": "inferred",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "node_key": "backend/app/users/models.py",
+      "basis": "inferred",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "node_key": "backend/app/users/routes.py",
+      "basis": "inferred",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "node_key": "backend/app/users/schemas.py",
+      "basis": "inferred",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "node_key": "backend/app/users/service.py",
+      "basis": "inferred",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:components:pkg:pypi:acme-backend#tests",
+      "node_key": "backend/tests/test_users.py",
+      "basis": "inferred",
+      "confidence": "medium"
+    },
+    {
+      "group_key": "group:directory:/",
+      "node_key": "README.md",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend",
+      "node_key": "backend/pyproject.toml",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend/app",
+      "node_key": "backend/app/__init__.py",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend/app",
+      "node_key": "backend/app/db.py",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend/app",
+      "node_key": "backend/app/legacy.py",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend/app",
+      "node_key": "backend/app/main.py",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend/app",
+      "node_key": "backend/app/plugins.py",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend/app/generated",
+      "node_key": "backend/app/generated/user_pb2.py",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend/app/users",
+      "node_key": "backend/app/users/__init__.py",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend/app/users",
+      "node_key": "backend/app/users/models.py",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend/app/users",
+      "node_key": "backend/app/users/routes.py",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend/app/users",
+      "node_key": "backend/app/users/schemas.py",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend/app/users",
+      "node_key": "backend/app/users/service.py",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:backend/tests",
+      "node_key": "backend/tests/test_users.py",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:frontend",
+      "node_key": "frontend/package.json",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:frontend",
+      "node_key": "frontend/tsconfig.json",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:frontend/src",
+      "node_key": "frontend/src/index.ts",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:frontend/src/orders",
+      "node_key": "frontend/src/orders/handlers.ts",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:frontend/src/orders",
+      "node_key": "frontend/src/orders/index.ts",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:frontend/src/orders",
+      "node_key": "frontend/src/orders/types.ts",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:frontend/vendor",
+      "node_key": "frontend/vendor/leftpad.js",
+      "basis": "observed",
+      "confidence": "high"
+    },
+    {
+      "group_key": "group:directory:scripts",
+      "node_key": "scripts/deploy.sh",
+      "basis": "observed",
+      "confidence": "high"
+    }
+  ],
+  "group_edges": [
+    {
+      "source_group_key": "group:components:pkg:pypi:acme-backend#app",
+      "target_group_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "edge_kind": "IMPORTS",
+      "count": 1,
+      "basis_counts": {
+        "resolved": 1
+      },
+      "sample_edge_refs": [
+        {
+          "ref": "edge",
+          "kind": "IMPORTS",
+          "source_key": "backend/app/main.py",
+          "target_key": "backend/app/users/routes.py"
+        }
+      ]
+    },
+    {
+      "source_group_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "target_group_key": "group:components:pkg:pypi:acme-backend#app",
+      "edge_kind": "IMPORTS",
+      "count": 1,
+      "basis_counts": {
+        "resolved": 1
+      },
+      "sample_edge_refs": [
+        {
+          "ref": "edge",
+          "kind": "IMPORTS",
+          "source_key": "backend/app/users/models.py",
+          "target_key": "backend/app/db.py#Base"
+        }
+      ]
+    },
+    {
+      "source_group_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "target_group_key": "group:components:pkg:pypi:acme-backend#app",
+      "edge_kind": "INHERITS",
+      "count": 1,
+      "basis_counts": {
+        "resolved": 1
+      },
+      "sample_edge_refs": [
+        {
+          "ref": "edge",
+          "kind": "INHERITS",
+          "source_key": "backend/app/users/models.py#User",
+          "target_key": "backend/app/db.py#Base"
+        }
+      ]
+    },
+    {
+      "source_group_key": "group:components:pkg:pypi:acme-backend#tests",
+      "target_group_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "edge_kind": "IMPORTS",
+      "count": 1,
+      "basis_counts": {
+        "resolved": 1
+      },
+      "sample_edge_refs": [
+        {
+          "ref": "edge",
+          "kind": "IMPORTS",
+          "source_key": "backend/tests/test_users.py",
+          "target_key": "backend/app/users/service.py#UserService"
+        }
+      ]
+    },
+    {
+      "source_group_key": "group:components:pkg:pypi:acme-backend#tests",
+      "target_group_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "edge_kind": "TESTS",
+      "count": 1,
+      "basis_counts": {
+        "heuristic": 1
+      },
+      "sample_edge_refs": [
+        {
+          "ref": "edge",
+          "kind": "TESTS",
+          "source_key": "backend/tests/test_users.py",
+          "target_key": "backend/app/users/service.py#UserService"
+        }
+      ]
+    },
+    {
+      "source_group_key": "group:directory:backend/tests",
+      "target_group_key": "group:directory:backend/app",
+      "edge_kind": "IMPORTS",
+      "count": 1,
+      "basis_counts": {
+        "resolved": 1
+      },
+      "sample_edge_refs": [
+        {
+          "ref": "edge",
+          "kind": "IMPORTS",
+          "source_key": "backend/tests/test_users.py",
+          "target_key": "backend/app/users/service.py#UserService"
+        }
+      ]
+    },
+    {
+      "source_group_key": "group:directory:backend/tests",
+      "target_group_key": "group:directory:backend/app",
+      "edge_kind": "TESTS",
+      "count": 1,
+      "basis_counts": {
+        "heuristic": 1
+      },
+      "sample_edge_refs": [
+        {
+          "ref": "edge",
+          "kind": "TESTS",
+          "source_key": "backend/tests/test_users.py",
+          "target_key": "backend/app/users/service.py#UserService"
+        }
+      ]
+    }
+  ],
+  "metrics": [
+    {
+      "node_key": "/",
+      "metric": "layer_files_classified",
+      "value": 6.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.coverage"
+      }
+    },
+    {
+      "node_key": "/",
+      "metric": "layer_files_considered",
+      "value": 9.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.coverage"
+      }
+    },
+    {
+      "node_key": "/",
+      "metric": "layer_files_unclassified",
+      "value": 3.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.coverage"
+      }
+    },
+    {
+      "node_key": "backend/app/__init__.py",
+      "metric": "layer_considered",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.coverage"
+      }
+    },
+    {
+      "node_key": "backend/app/db.py",
+      "metric": "layer_considered",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.coverage"
+      }
+    },
+    {
+      "node_key": "backend/app/main.py",
+      "metric": "layer_considered",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.coverage"
+      }
+    },
+    {
+      "node_key": "backend/app/plugins.py",
+      "metric": "layer_considered",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.coverage"
+      }
+    },
+    {
+      "node_key": "backend/app/users/__init__.py",
+      "metric": "layer_considered",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.coverage"
+      }
+    },
+    {
+      "node_key": "backend/app/users/models.py",
+      "metric": "layer_considered",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.coverage"
+      }
+    },
+    {
+      "node_key": "backend/app/users/routes.py",
+      "metric": "layer_considered",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.coverage"
+      }
+    },
+    {
+      "node_key": "backend/app/users/schemas.py",
+      "metric": "layer_considered",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.coverage"
+      }
+    },
+    {
+      "node_key": "backend/app/users/service.py",
+      "metric": "layer_considered",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.coverage"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend",
+      "metric": "efferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend",
+      "metric": "files",
+      "value": 12.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend",
+      "metric": "internal_edges",
+      "value": 7.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app",
+      "metric": "afferent",
+      "value": 2.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app",
+      "metric": "efferent",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app",
+      "metric": "files",
+      "value": 5.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app",
+      "metric": "instability",
+      "value": 0.3333333333333333,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app",
+      "metric": "internal_edges",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app.generated",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app.generated",
+      "metric": "efferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app.generated",
+      "metric": "files",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app.generated",
+      "metric": "internal_edges",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "metric": "afferent",
+      "value": 2.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "metric": "efferent",
+      "value": 2.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "metric": "files",
+      "value": 5.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "metric": "instability",
+      "value": 0.5,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#app.users",
+      "metric": "internal_edges",
+      "value": 3.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#tests",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#tests",
+      "metric": "efferent",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#tests",
+      "metric": "files",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#tests",
+      "metric": "instability",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:components:pkg:pypi:acme-backend#tests",
+      "metric": "internal_edges",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:/",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:/",
+      "metric": "efferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:/",
+      "metric": "files",
+      "value": 22.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:/",
+      "metric": "internal_edges",
+      "value": 11.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend",
+      "metric": "efferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend",
+      "metric": "files",
+      "value": 13.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend",
+      "metric": "internal_edges",
+      "value": 7.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app",
+      "metric": "afferent",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app",
+      "metric": "efferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app",
+      "metric": "files",
+      "value": 11.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app",
+      "metric": "instability",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app",
+      "metric": "internal_edges",
+      "value": 6.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app/generated",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app/generated",
+      "metric": "efferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app/generated",
+      "metric": "files",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app/generated",
+      "metric": "internal_edges",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app/users",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app/users",
+      "metric": "efferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app/users",
+      "metric": "files",
+      "value": 5.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/app/users",
+      "metric": "internal_edges",
+      "value": 3.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/tests",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/tests",
+      "metric": "efferent",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/tests",
+      "metric": "files",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/tests",
+      "metric": "instability",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:backend/tests",
+      "metric": "internal_edges",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend",
+      "metric": "efferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend",
+      "metric": "files",
+      "value": 7.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend",
+      "metric": "internal_edges",
+      "value": 4.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend/src",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend/src",
+      "metric": "efferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend/src",
+      "metric": "files",
+      "value": 4.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend/src",
+      "metric": "internal_edges",
+      "value": 4.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend/src/orders",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend/src/orders",
+      "metric": "efferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend/src/orders",
+      "metric": "files",
+      "value": 3.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend/src/orders",
+      "metric": "internal_edges",
+      "value": 3.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend/vendor",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend/vendor",
+      "metric": "efferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend/vendor",
+      "metric": "files",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:frontend/vendor",
+      "metric": "internal_edges",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:scripts",
+      "metric": "afferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:scripts",
+      "metric": "efferent",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:scripts",
+      "metric": "files",
+      "value": 1.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    },
+    {
+      "node_key": "group:directory:scripts",
+      "metric": "internal_edges",
+      "value": 0.0,
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.metrics.group"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "rule": "arch.group.cycle",
+      "severity": "medium",
+      "subject_keys": [
+        "group:components:pkg:pypi:acme-backend#app",
+        "group:components:pkg:pypi:acme-backend#app.users"
+      ],
+      "message": "Groups app, app.users depend on each other (dependency cycle)",
+      "basis": "inferred",
+      "confidence": "high",
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.group.cycle"
+          },
+          "type": "derived",
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/main.py",
+              "target_key": "backend/app/users/routes.py"
+            }
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.group.cycle"
+          },
+          "type": "derived",
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/users/models.py",
+              "target_key": "backend/app/db.py#Base"
+            }
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.group.cycle"
+          },
+          "type": "derived",
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "INHERITS",
+              "source_key": "backend/app/users/models.py#User",
+              "target_key": "backend/app/db.py#Base"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "node_key": "backend/app/db.py",
+      "layer": "infrastructure",
+      "basis": "inferred",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.resolve"
+      },
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.framework_import"
+          },
+          "type": "derived",
+          "node_keys": [
+            "ext:pypi:sqlalchemy"
+          ],
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/db.py",
+              "target_key": "ext:pypi:sqlalchemy"
+            },
+            {
+              "ref": "edge",
+              "kind": "INHERITS",
+              "source_key": "backend/app/db.py#Base",
+              "target_key": "ext:pypi:sqlalchemy"
+            }
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.name"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app/db.py"
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.direction"
+          },
+          "type": "derived",
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/users/models.py",
+              "target_key": "backend/app/db.py#Base"
+            },
+            {
+              "ref": "edge",
+              "kind": "INHERITS",
+              "source_key": "backend/app/users/models.py#User",
+              "target_key": "backend/app/db.py#Base"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "node_key": "backend/app/main.py",
+      "layer": "interface",
+      "basis": "inferred",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.resolve"
+      },
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.framework_import"
+          },
+          "type": "derived",
+          "node_keys": [
+            "ext:pypi:fastapi"
+          ],
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/main.py",
+              "target_key": "ext:pypi:fastapi"
+            }
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.role"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app/main.py"
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.direction"
+          },
+          "type": "derived",
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/main.py",
+              "target_key": "backend/app/users/routes.py"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "node_key": "backend/app/users/models.py",
+      "layer": "infrastructure",
+      "basis": "inferred",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.resolve"
+      },
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.framework_import"
+          },
+          "type": "derived",
+          "node_keys": [
+            "ext:pypi:sqlalchemy"
+          ],
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/users/models.py",
+              "target_key": "ext:pypi:sqlalchemy"
+            }
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.role"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app/users/models.py#User"
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.direction"
+          },
+          "type": "derived",
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/users/models.py",
+              "target_key": "backend/app/db.py#Base"
+            },
+            {
+              "ref": "edge",
+              "kind": "INHERITS",
+              "source_key": "backend/app/users/models.py#User",
+              "target_key": "backend/app/db.py#Base"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "node_key": "backend/app/users/routes.py",
+      "layer": "interface",
+      "basis": "inferred",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.resolve"
+      },
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.framework_import"
+          },
+          "type": "derived",
+          "node_keys": [
+            "ext:pypi:fastapi"
+          ],
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/users/routes.py",
+              "target_key": "ext:pypi:fastapi"
+            }
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.name"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app/users/routes.py"
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.direction"
+          },
+          "type": "derived",
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/main.py",
+              "target_key": "backend/app/users/routes.py"
+            },
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/users/routes.py",
+              "target_key": "backend/app/users/schemas.py#UserOut"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "node_key": "backend/app/users/schemas.py",
+      "layer": "interface",
+      "basis": "inferred",
+      "confidence": "high",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.resolve"
+      },
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.role"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app/users/schemas.py#UserOut"
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.name"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app/users/schemas.py"
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.direction"
+          },
+          "type": "derived",
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/users/routes.py",
+              "target_key": "backend/app/users/schemas.py#UserOut"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "node_key": "backend/app/users/service.py",
+      "layer": "application",
+      "basis": "inferred",
+      "confidence": "medium",
+      "provenance": {
+        "producer": "architecture",
+        "rule": "arch.layer.resolve"
+      },
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.name"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app/users/service.py"
+          ]
+        },
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "architecture",
+            "rule": "arch.layer.direction"
+          },
+          "type": "derived",
+          "edge_refs": [
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/users/routes.py",
+              "target_key": "backend/app/users/service.py#UserService"
+            },
+            {
+              "ref": "edge",
+              "kind": "IMPORTS",
+              "source_key": "backend/app/users/service.py",
+              "target_key": "backend/app/users/models.py#User"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
