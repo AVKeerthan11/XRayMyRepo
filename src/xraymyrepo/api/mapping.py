@@ -19,6 +19,7 @@ from xraymyrepo.cim import (
     InferredLayer,
 )
 from xraymyrepo.cim.nodes import Node
+from xraymyrepo.cim.provenance import Provenance
 from xraymyrepo.persistence import derivation_queries as dq
 from xraymyrepo.persistence import queries
 from xraymyrepo.persistence.queries import NodeBrief as NodeBriefRecord
@@ -271,4 +272,13 @@ def finding_view(finding_id: int, finding: Finding) -> models.FindingView:
         basis=finding.basis,
         confidence=finding.confidence,
         evidence=list(finding.evidence),
+    )
+
+
+def metric_view(record: dq.MetricRecord) -> models.MetricView:
+    return models.MetricView(
+        subject_key=record.subject_key,
+        metric=record.metric,
+        value=record.value,
+        provenance=Provenance(producer=record.producer, rule=record.rule),
     )

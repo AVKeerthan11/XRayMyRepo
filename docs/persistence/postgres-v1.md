@@ -40,7 +40,9 @@ of indexed statements instead of materializing the document: repositories and sn
 `get_repository`, `list_snapshots`, `get_snapshot`, `get_snapshot_setup`, `snapshot_stats`), nodes (`get_node`,
 `get_node_brief`, `get_children`, `count_children`, `get_ancestors`, `list_nodes`, `search_nodes`, `get_tags`,
 `get_classifications`), edges (`get_edges`, `edge_counts`, `get_edge`) and diagnostics (`get_diagnostics`,
-`diagnostic_counts`). They take and return CIM keys and records, never database ids; paged functions use
+`diagnostic_counts`), and `load_graph_records` (a whole snapshot's dependency graph as plain records, in four
+queries, for in-memory traversals such as change impact). They take and return CIM keys and records, never
+database ids; paged functions use
 keyset pagination (`after` = the sort key of the last item, see the `*_sort_key` helpers). They assume the
 snapshot is complete. Row-to-record mapping (`_rows.py`) is shared with `load_snapshot`.
 `REQUIRED_MIGRATIONS` lists the migrations the code depends on.
@@ -128,7 +130,8 @@ snapshot as a unit (retention); it is not a change to what a kept snapshot says.
 ## Derivations (migration 0003)
 
 A `Derivation` (CIM §8) is computed from one complete snapshot by `xraymyrepo.architecture`
-(docs/architecture/architecture-v1.md). Persistence stores and reads it without knowing how it was computed,
+(docs/architecture/architecture-v1.md) or `xraymyrepo.insights` (health: docs/insights/insights-v1.md;
+findings and metrics only, same tables). Persistence stores and reads it without knowing how it was computed,
 and never imports `architecture`.
 
 | Function | Does |
@@ -171,7 +174,12 @@ number of indexed statements, and pages by keyset:
   `group_metrics`, `layer_mix` (layers of the considered files in a subtree), `group_members` (CIM nodes).
 * **Group edges.** `group_edges` with `lens=` (top level), `within=` (between a group's children: one zoom
   level) or `group=` plus `direction`.
-* **Layers and findings.** `get_layer`, `is_considered`, `list_layers`, `list_unclassified`, `list_findings`.
+* **Layers and findings.** `get_layer`, `is_considered`, `list_layers`, `list_unclassified`,
+  `list_findings` (by `rule` and/or `subject`, a node or group key in `subject_keys`).
+* **Metrics.** `list_metrics(run, metric, descending=…)`: one metric over every subject, node or group,
+  ranked by value then subject key, keyset-paged (`metric_sort_key`).
+* **Mapping files onto a lens.** `memberships(run, lens, node_keys)` (file → group) and
+  `lens_groups(run, lens)` (every group with its parent and label), used to count change impact per group.
 
 **Unclassified is explicit.** A file the layering considered carries the metric `layer_considered`:
 - considered with an inferred layer is classified;

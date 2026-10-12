@@ -16,11 +16,14 @@ class Settings:
     """Seconds to wait for a database connection before answering 503."""
     cors_origins: tuple[str, ...] = ()
     """Browser origins allowed to call the API (e.g. the frontend dev server)."""
+    impact_cache_size: int = 4
+    """Snapshot dependency graphs kept per process for impact queries (0: no cache)."""
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] = os.environ) -> Settings:
         """``XRAY_DATABASE_URL`` (required), ``XRAY_DB_POOL_MIN``, ``XRAY_DB_POOL_MAX``,
-        ``XRAY_DB_POOL_TIMEOUT`` and ``XRAY_CORS_ORIGINS`` (comma-separated)."""
+        ``XRAY_DB_POOL_TIMEOUT``, ``XRAY_CORS_ORIGINS`` (comma-separated) and
+        ``XRAY_IMPACT_CACHE_SIZE``."""
         url = environ.get("XRAY_DATABASE_URL")
         if not url:
             raise RuntimeError("XRAY_DATABASE_URL is not set")
@@ -31,4 +34,5 @@ class Settings:
             pool_max_size=int(environ.get("XRAY_DB_POOL_MAX", cls.pool_max_size)),
             pool_timeout=float(environ.get("XRAY_DB_POOL_TIMEOUT", cls.pool_timeout)),
             cors_origins=tuple(o.strip() for o in origins.split(",") if o.strip()),
+            impact_cache_size=int(environ.get("XRAY_IMPACT_CACHE_SIZE", cls.impact_cache_size)),
         )

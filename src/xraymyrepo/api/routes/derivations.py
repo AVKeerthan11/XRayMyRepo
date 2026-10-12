@@ -40,6 +40,7 @@ from ..models import (
     GroupEdgeView,
     GroupSummary,
     LayerAssignment,
+    MetricView,
     NodeBrief,
     NodeLayer,
     NodeSummary,
@@ -54,6 +55,7 @@ _RUN_PROBLEMS = {"conflict": "Derivation run not complete"}
 _ID_CURSOR: TypeAdapter[int] = TypeAdapter(int)
 _KEY_CURSOR: TypeAdapter[str] = TypeAdapter(str)
 _GROUP_EDGE_CURSOR: TypeAdapter[dq.GroupEdgeSortKey] = TypeAdapter(dq.GroupEdgeSortKey)
+_METRIC_CURSOR: TypeAdapter[dq.MetricSortKey] = TypeAdapter(dq.MetricSortKey)
 
 GroupKey = Annotated[str, Query(description="CIM group key, e.g. `group:components:/#app`")]
 
@@ -293,20 +295,65 @@ def list_unclassified(
     return Page(items=[mapping.node_brief(b) for b in items], next_cursor=next_cursor)
 
 
+def checked_subject_key(key: str) -> str:
+    """A finding subject is a node key or a group key."""
+    if key.startswith("group:"):
+        return checked_group_key(key, "subject")
+    return checked_key(key, "subject")
+
+
 @router.get(
     f"{RUN}/findings",
-    summary="Findings (layer violations, group cycles), in creation order",
+    summary="Findings of a run, in creation order",
     responses=responses(400, 409, **_RUN_PROBLEMS),
 )
 def list_findings(
     conn: Conn,
     run: CompleteRun,
-    rule: Annotated[str | None, Query(description="e.g. `arch.group.cycle`")] = None,
+    rule: Annotated[str | None, Query(description="e.g. `health.import.cycle`")] = None,
+    subject: Annotated[
+        str | None, Query(description="Only findings about this node or group key")
+    ] = None,
     limit: Limit = DEFAULT_LIMIT,
     cursor: Cursor = None,
 ) -> Page[FindingView]:
+    """Architecture runs report layer violations and group cycles; health runs report
+    file cycles, hubs, unreferenced modules, unused declared dependencies (all
+    ``inferred``) and coverage blind spots (``observed``)."""
     rows = dq.list_findings(
-        conn, run.id, rule=rule, after=cursors.decode(cursor, _ID_CURSOR), limit=limit + 1
+        conn,
+        run.id,
+        rule=rule,
+        subject=None if subject is None else checked_subject_key(subject),
+        after=cursors.decode(cursor, _ID_CURSOR),
+        limit=limit + 1,
     )
     items, next_cursor = cursors.page(rows, limit, lambda item: item[0])
     return Page(items=[mapping.finding_view(i, f) for i, f in items], next_cursor=next_cursor)
+
+
+@router.get(
+    f"{RUN}/metrics",
+    summary="One metric over every subject of a run, ranked by value",
+    responses=responses(400, 409, **_RUN_PROBLEMS),
+)
+def list_metrics(
+    conn: Conn,
+    run: CompleteRun,
+    metric: Annotated[str, Query(description="e.g. `fan_in` (health) or `instability`")],
+    order: Annotated[Literal["desc", "asc"], Query(description="By value")] = "desc",
+    limit: Limit = DEFAULT_LIMIT,
+    cursor: Cursor = None,
+) -> Page[MetricView]:
+    """Subjects are node keys (file metrics) or group keys (group metrics); ties are
+    ordered by subject key."""
+    rows = dq.list_metrics(
+        conn,
+        run.id,
+        metric,
+        descending=order == "desc",
+        after=cursors.decode(cursor, _METRIC_CURSOR),
+        limit=limit + 1,
+    )
+    items, next_cursor = cursors.page(rows, limit, dq.metric_sort_key)
+    return Page(items=[mapping.metric_view(m) for m in items], next_cursor=next_cursor)

@@ -16,7 +16,6 @@ from xraymyrepo.architecture import (
     derive,
     validate_against,
 )
-from xraymyrepo.architecture.findings import _strongly_connected
 from xraymyrepo.architecture.index import SnapshotIndex
 from xraymyrepo.architecture.lenses import LensResult, components_lens, directory_lens
 from xraymyrepo.cim import (
@@ -33,6 +32,7 @@ from xraymyrepo.cim import (
     NodeKind,
     SnapshotDocument,
 )
+from xraymyrepo.graph import strongly_connected
 
 from ..analyzer.helpers import run
 from ..conftest import GOLDEN_DIR, GOLDEN_REPO
@@ -342,5 +342,5 @@ def test_validate_against_rejects_dangling_keys(golden: SnapshotDocument,
 
 def test_strongly_connected_components() -> None:
     adjacency = {"a": ["b"], "b": ["c"], "c": ["a", "d"], "d": ["e"], "e": ["d"], "f": ["f"]}
-    found = sorted(_strongly_connected(sorted("abcdef"), adjacency))
+    found = sorted(strongly_connected(sorted("abcdef"), adjacency))
     assert found == [["a", "b", "c"], ["d", "e"], ["f"]]

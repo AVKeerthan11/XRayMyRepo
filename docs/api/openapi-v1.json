@@ -51,6 +51,41 @@
         "title": "Basis",
         "type": "string"
       },
+      "BlindSpotView": {
+        "additionalProperties": false,
+        "properties": {
+          "extraction_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExtractionStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "node": {
+            "$ref": "#/components/schemas/NodeBrief"
+          },
+          "unresolved_imports": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/UnresolvedReason"
+            },
+            "title": "Unresolved Imports",
+            "type": "object"
+          }
+        },
+        "required": [
+          "node",
+          "extraction_status",
+          "unresolved_imports"
+        ],
+        "title": "BlindSpotView",
+        "type": "object"
+      },
       "CallKind": {
         "enum": [
           "direct",
@@ -1273,6 +1308,248 @@
         "title": "Health",
         "type": "object"
       },
+      "ImpactGroup": {
+        "additionalProperties": false,
+        "properties": {
+          "affected_files": {
+            "title": "Affected Files",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "min_distance": {
+            "title": "Min Distance",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "affected_files",
+          "min_distance"
+        ],
+        "title": "ImpactGroup",
+        "type": "object"
+      },
+      "ImpactGroupReport": {
+        "additionalProperties": false,
+        "properties": {
+          "affected_files": {
+            "title": "Affected Files",
+            "type": "integer"
+          },
+          "direct_files": {
+            "title": "Direct Files",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImpactGroup"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "lens": {
+            "title": "Lens",
+            "type": "string"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "parent_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Key"
+          },
+          "unassigned_files": {
+            "title": "Unassigned Files",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "lens",
+          "parent_key",
+          "affected_files",
+          "direct_files",
+          "unassigned_files",
+          "items",
+          "next_cursor"
+        ],
+        "title": "ImpactGroupReport",
+        "type": "object"
+      },
+      "ImpactItem": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "file",
+              "test",
+              "endpoint"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "distance": {
+            "title": "Distance",
+            "type": "integer"
+          },
+          "node": {
+            "$ref": "#/components/schemas/NodeBrief"
+          },
+          "via": {
+            "items": {
+              "$ref": "#/components/schemas/EdgeRef"
+            },
+            "title": "Via",
+            "type": "array"
+          }
+        },
+        "required": [
+          "node",
+          "category",
+          "distance",
+          "confidence",
+          "via"
+        ],
+        "title": "ImpactItem",
+        "type": "object"
+      },
+      "ImpactReport": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImpactItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` (with the same parameters) for the next page.",
+            "title": "Next Cursor"
+          },
+          "seeds": {
+            "items": {
+              "$ref": "#/components/schemas/NodeBrief"
+            },
+            "title": "Seeds",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ImpactSummary"
+          }
+        },
+        "required": [
+          "seeds",
+          "summary",
+          "items",
+          "next_cursor"
+        ],
+        "title": "ImpactReport",
+        "type": "object"
+      },
+      "ImpactSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "affected_endpoints": {
+            "title": "Affected Endpoints",
+            "type": "integer"
+          },
+          "affected_files": {
+            "title": "Affected Files",
+            "type": "integer"
+          },
+          "affected_tests": {
+            "title": "Affected Tests",
+            "type": "integer"
+          },
+          "beyond_depth": {
+            "title": "Beyond Depth",
+            "type": "boolean"
+          },
+          "blind_spot_files": {
+            "title": "Blind Spot Files",
+            "type": "integer"
+          },
+          "by_confidence": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/Confidence"
+            },
+            "title": "By Confidence",
+            "type": "object"
+          },
+          "by_distance": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Distance",
+            "type": "object"
+          },
+          "max_depth": {
+            "title": "Max Depth",
+            "type": "integer"
+          },
+          "truncated": {
+            "title": "Truncated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "max_depth",
+          "affected_files",
+          "affected_tests",
+          "affected_endpoints",
+          "by_distance",
+          "by_confidence",
+          "truncated",
+          "beyond_depth",
+          "blind_spot_files"
+        ],
+        "title": "ImpactSummary",
+        "type": "object"
+      },
       "ImportsAttributes": {
         "additionalProperties": false,
         "properties": {
@@ -1504,6 +1781,34 @@
           "member_count"
         ],
         "title": "LensSummary",
+        "type": "object"
+      },
+      "MetricView": {
+        "additionalProperties": false,
+        "properties": {
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "subject_key": {
+            "title": "Subject Key",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "subject_key",
+          "metric",
+          "value",
+          "provenance"
+        ],
+        "title": "MetricView",
         "type": "object"
       },
       "NodeBrief": {
@@ -1931,6 +2236,36 @@
         "title": "PackageAttributes",
         "type": "object"
       },
+      "Page_BlindSpotView_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BlindSpotView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[BlindSpotView]",
+        "type": "object"
+      },
       "Page_DerivationRunSummary_": {
         "additionalProperties": false,
         "properties": {
@@ -2079,6 +2414,36 @@
           "next_cursor"
         ],
         "title": "Page[LayerAssignment]",
+        "type": "object"
+      },
+      "Page_MetricView_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MetricView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[MetricView]",
         "type": "object"
       },
       "Page_NodeBrief_": {
@@ -3231,6 +3596,7 @@
     },
     "/api/v1/derivations/{run_id}/findings": {
       "get": {
+        "description": "Architecture runs report layer violations and group cycles; health runs report\nfile cycles, hubs, unreferenced modules, unused declared dependencies (all\n``inferred``) and coverage blind spots (``observed``).",
         "operationId": "list_findings_api_v1_derivations__run_id__findings_get",
         "parameters": [
           {
@@ -3244,7 +3610,7 @@
             }
           },
           {
-            "description": "e.g. `arch.group.cycle`",
+            "description": "e.g. `health.import.cycle`",
             "in": "query",
             "name": "rule",
             "required": false,
@@ -3257,8 +3623,26 @@
                   "type": "null"
                 }
               ],
-              "description": "e.g. `arch.group.cycle`",
+              "description": "e.g. `health.import.cycle`",
               "title": "Rule"
+            }
+          },
+          {
+            "description": "Only findings about this node or group key",
+            "in": "query",
+            "name": "subject",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only findings about this node or group key",
+              "title": "Subject"
             }
           },
           {
@@ -3366,7 +3750,7 @@
             "description": "Database unavailable"
           }
         },
-        "summary": "Findings (layer violations, group cycles), in creation order",
+        "summary": "Findings of a run, in creation order",
         "tags": [
           "architecture"
         ]
@@ -4031,6 +4415,204 @@
         ]
       }
     },
+    "/api/v1/derivations/{run_id}/impact/groups": {
+      "get": {
+        "description": "The impact on the run's snapshot, counted per child group of ``parent`` (or per\ntop-level group). Counts include descendant groups; ``min_distance`` is the closest\naffected file. Groups without affected files are omitted.",
+        "operationId": "impact_groups_api_v1_derivations__run_id__impact_groups_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Changed node key; repeatable (at most 50)",
+            "in": "query",
+            "name": "node",
+            "required": true,
+            "schema": {
+              "description": "Changed node key; repeatable (at most 50)",
+              "items": {
+                "type": "string"
+              },
+              "title": "Node",
+              "type": "array"
+            }
+          },
+          {
+            "description": "e.g. `components` or `directory`",
+            "in": "query",
+            "name": "lens",
+            "required": true,
+            "schema": {
+              "description": "e.g. `components` or `directory`",
+              "title": "Lens",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Group to break down; omit: top level",
+            "in": "query",
+            "name": "parent",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Group to break down; omit: top level",
+              "title": "Parent"
+            }
+          },
+          {
+            "description": "Maximum hops from a seed",
+            "in": "query",
+            "name": "depth",
+            "required": false,
+            "schema": {
+              "default": 3,
+              "description": "Maximum hops from a seed",
+              "maximum": 10,
+              "minimum": 0,
+              "title": "Depth",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImpactGroupReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Derivation run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Affected files per group of an architecture lens (one level)",
+        "tags": [
+          "impact"
+        ]
+      }
+    },
     "/api/v1/derivations/{run_id}/layers": {
       "get": {
         "operationId": "list_layers_api_v1_derivations__run_id__layers_get",
@@ -4398,6 +4980,159 @@
           }
         },
         "summary": "Files the layering considered but could not classify",
+        "tags": [
+          "architecture"
+        ]
+      }
+    },
+    "/api/v1/derivations/{run_id}/metrics": {
+      "get": {
+        "description": "Subjects are node keys (file metrics) or group keys (group metrics); ties are\nordered by subject key.",
+        "operationId": "list_metrics_api_v1_derivations__run_id__metrics_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "e.g. `fan_in` (health) or `instability`",
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "description": "e.g. `fan_in` (health) or `instability`",
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "By value",
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "description": "By value",
+              "enum": [
+                "desc",
+                "asc"
+              ],
+              "title": "Order",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_MetricView_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Derivation run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "One metric over every subject of a run, ranked by value",
         "tags": [
           "architecture"
         ]
@@ -5256,6 +5991,339 @@
         "summary": "One edge, identified by kind, source key and target key, with its evidence",
         "tags": [
           "relationships"
+        ]
+      }
+    },
+    "/api/v1/snapshots/{snapshot_id}/impact": {
+      "get": {
+        "description": "Affected files (``file``/``test``) and ``endpoint``s by (distance, key), each with a\nshortest witness path and a confidence. The summary covers the whole result; blind\nspots (files whose dependencies cannot be fully seen) are counted, never added.",
+        "operationId": "snapshot_impact_api_v1_snapshots__snapshot_id__impact_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Snapshot Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Changed node key; repeatable (at most 50)",
+            "in": "query",
+            "name": "node",
+            "required": true,
+            "schema": {
+              "description": "Changed node key; repeatable (at most 50)",
+              "items": {
+                "type": "string"
+              },
+              "title": "Node",
+              "type": "array"
+            }
+          },
+          {
+            "description": "Maximum hops from a seed",
+            "in": "query",
+            "name": "depth",
+            "required": false,
+            "schema": {
+              "default": 3,
+              "description": "Maximum hops from a seed",
+              "maximum": 10,
+              "minimum": 0,
+              "title": "Depth",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Only this category",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "file",
+                    "test",
+                    "endpoint"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only this category",
+              "title": "Category"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImpactReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Snapshot not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "What is affected if these nodes change",
+        "tags": [
+          "impact"
+        ]
+      }
+    },
+    "/api/v1/snapshots/{snapshot_id}/impact/blind-spots": {
+      "get": {
+        "description": "Files with unresolved ``dynamic`` or ``not_found`` imports, or whose extraction\n``failed`` or was ``partial``: they may depend on anything without it showing in\nan impact result. Independent of seeds; in key order.",
+        "operationId": "blind_spots_api_v1_snapshots__snapshot_id__impact_blind_spots_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Snapshot Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_BlindSpotView_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Snapshot not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Files whose dependencies the snapshot cannot fully show",
+        "tags": [
+          "impact"
         ]
       }
     },

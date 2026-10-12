@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import Depends, Path, Query
+from fastapi import Depends, Path, Query, Request
 
 from xraymyrepo.cim import InvalidKeyError, NodeKind, SnapshotStatus
 from xraymyrepo.cim.enums import SNAPSHOT_NODE_KINDS
@@ -15,6 +15,7 @@ from xraymyrepo.persistence.queries import SnapshotRecord
 
 from .db import Conn
 from .errors import ApiError, not_found
+from .graphs import GraphCache
 
 DEFAULT_LIMIT = 200
 MAX_LIMIT = 1000
@@ -77,3 +78,11 @@ def checked_group_key(key: str, parameter: str) -> str:
     except InvalidKeyError:
         detail = f"Parameter {parameter!r} is not a valid CIM group key: {key!r}."
         raise ApiError(422, "invalid_key", "Invalid key", detail) from None
+
+
+def graph_cache(request: Request) -> GraphCache:
+    cache: GraphCache = request.app.state.graph_cache
+    return cache
+
+
+Graphs = Annotated[GraphCache, Depends(graph_cache)]

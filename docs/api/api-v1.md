@@ -24,6 +24,7 @@ uvicorn --factory xraymyrepo.api:create_app
 | `XRAY_DB_POOL_MIN` / `XRAY_DB_POOL_MAX` | 1 / 10 | Connection pool size |
 | `XRAY_DB_POOL_TIMEOUT` | 5 | Seconds to wait for a connection before answering 503 |
 | `XRAY_CORS_ORIGINS` | none | Comma-separated browser origins allowed to call the API (GET only) |
+| `XRAY_IMPACT_CACHE_SIZE` | 4 | Snapshot graphs kept per process for impact queries (0: no cache) |
 
 The app starts even when the database is down; `/ready` answers 503 until it is reachable and migrated.
 
@@ -40,8 +41,9 @@ analyzer/       independent of persistence and the API
 
 `tests/test_architecture.py` enforces the direction: `cim` imports nothing else, `analyzer` never imports
 `persistence`/`api`/`psycopg`/`fastapi`, `architecture` imports only `cim`, `persistence` never imports `api`
-or `architecture`, and `api` imports neither `analyzer`, `architecture` nor `orchestration`: it only reads
-through persistence.
+or `architecture`, and `api` imports neither `analyzer`, `architecture` nor `orchestration`. It reads
+through persistence, and for on-request computations (change impact) it may run the pure `insights` and
+`graph` code. It never derives-and-stores.
 
 * **API sessions are read-only** (`default_transaction_read_only`), on top of the snapshot immutability triggers.
 * **Only complete snapshots are served.** Every snapshot-scoped endpoint checks the snapshot first: unknown is
@@ -90,7 +92,33 @@ and confidence: docs/architecture/architecture-v1.md. `{run}` is `/derivations/{
 | `{run}/layers` | Inferred layers by node key | `layer`, `limit`, `cursor` | `Page[LayerAssignment]` |
 | `{run}/layers/by-node` | One file's layer status | `node` | `NodeLayer` |
 | `{run}/layers/unclassified` | Files considered but not classified | `limit`, `cursor` | `Page[NodeBrief]` |
-| `{run}/findings` | Layer violations and group cycles, in creation order | `rule`, `limit`, `cursor` | `Page[FindingView]` |
+| `{run}/findings` | Findings in creation order: layer violations and group cycles (architecture), health findings (health) | `rule`, `subject` (node or group key), `limit`, `cursor` | `Page[FindingView]` |
+| `{run}/metrics` | One metric over every subject, ranked by value (ties by subject key) | `metric` (required), `order` (`desc`/`asc`), `limit`, `cursor` | `Page[MetricView]` |
+
+### Change impact
+
+Computed on request from the snapshot's dependency graph, which is cached per process. Rules, confidence
+and blind spots are described in docs/insights/insights-v1.md.
+
+| Path | Purpose | Parameters | Response |
+| --- | --- | --- | --- |
+| `/snapshots/{id}/impact` | What is affected if these nodes change | `node`* (1–50 seed keys), `depth` (0–10, default 3), `category` (`file`/`test`/`endpoint`), `limit`, `cursor` | `ImpactReport` |
+| `/snapshots/{id}/impact/blind-spots` | Files whose dependencies cannot be fully seen | `limit`, `cursor` | `Page[BlindSpotView]` |
+| `/derivations/{run_id}/impact/groups` | Affected files per group of a lens, one level | `node`*, `lens` (required), `parent` (group key), `depth`, `limit`, `cursor` | `ImpactGroupReport` |
+
+* **`ImpactReport`** contains:
+  * `seeds`;
+  * a `summary` over the **whole** result: counts by category, distance and confidence, plus `truncated`,
+    `beyond_depth` and `blind_spot_files`;
+  * one page of `items` ordered by (distance, key), each with `category`, `distance`, `confidence` and
+    `via` (a shortest witness path of edge refs).
+* **Paging.** Pass the same parameters with `cursor` for the next page.
+* **Blind spots are counted, never added** to the items.
+* **`ImpactGroupReport`** counts affected files per child group of `parent` (or per top-level group),
+  including descendants, with the closest distance. It also reports `direct_files` (assigned to `parent`
+  itself) and `unassigned_files` (not under `parent` in that lens).
+* **Errors.** An unknown seed is 404 `node_not_found`. The repository root or more than 50 seeds is 422
+  `invalid_parameters`; a malformed key is 422 `invalid_key`.
 
 **Response semantics:**
 
@@ -114,6 +142,13 @@ and confidence: docs/architecture/architecture-v1.md. `{run}` is `/derivations/{
 * **`LayerAssignment`** carries `node_key` only. Resolve names with the snapshot routes or `layers/by-node`.
 * **`groups/children` requires `lens`,** even with `parent`. A parent of another lens is 404
   `group_not_found`; the lens is never switched silently.
+* **Run detail across algorithms.** `lenses` and `layer_coverage` are produced by the architecture
+  algorithm. For other runs (e.g. `health`) they are an empty list and zeros, not omitted.
+* **Health runs** (docs/insights/insights-v1.md):
+  * `findings` returns observed coverage gaps (`basis: "observed"`, span evidence) and inferred
+    structural findings (`basis: "inferred"`);
+  * `metrics?metric=fan_in` ranks files by fan-in;
+  * `findings?subject=<key>` lists what is reported about one file or group.
 
 **Keys are query parameters.** CIM keys contain `/`, `#`, `:`, spaces, `{}` and `@`
 (`endpoint:http:GET /users/{id}@/`), so they never appear in paths. Clients must URL-encode them; in particular
@@ -170,7 +205,7 @@ Every error is RFC 9457 `application/problem+json`:
 | --- | --- |
 | 404 | `repository_not_found`, `snapshot_not_found`, `node_not_found` (also for `parent`/`node`), `edge_not_found`, `derivation_not_found`, `lens_not_found`, `group_not_found`, `not_found` (no such route) |
 | 409 | `snapshot_not_complete`, `derivation_not_complete` |
-| 422 | `validation_error` (with `errors[]`: `loc`, `msg`, `type`); `invalid_key` (not a well-formed CIM node or group key, so it can never exist); `invalid_parameters` (`group-edges` without exactly one of `lens`/`within`/`group`, or `direction` without `group`) |
+| 422 | `validation_error` (with `errors[]`: `loc`, `msg`, `type`); `invalid_key` (not a well-formed CIM node or group key, so it can never exist; also for `findings?subject=` and impact seeds); `invalid_parameters` (`group-edges` without exactly one of `lens`/`within`/`group`, or `direction` without `group`; impact with the repository root or more than 50 seeds) |
 | 400 | `invalid_cursor` |
 | 405 | `method_not_allowed` |
 | 503 | `database_unavailable` |
@@ -196,7 +231,9 @@ on the indexes of migrations 0001 and 0003:
 | `{run}/groups/members` | 5 | `group_member_group_idx`, then the snapshot node indexes |
 | `{run}/group-edges` | 3 | `group_edge` primary key (out), `group_edge_target_idx` (in) |
 | `{run}/layers/by-node` | 3, or 4 for a file without a layer | `inferred_layer` primary key, `node_metric_node_idx` |
-| `{run}/layers`, `layers/unclassified`, `findings`, `/snapshots/{id}/derivations` | 2 | `inferred_layer_layer_idx`, `finding` primary key, `derivation_run_snapshot_idx` |
+| `/snapshots/{id}/impact`, `impact/blind-spots` | 1 with a cached graph, 5 when the graph is loaded | snapshot primary key; loading: `node_key_unique`, `edge` scans of one snapshot |
+| `/derivations/{run}/impact/groups` | 4 with a cached graph | `group_member` primary key, `derived_group_parent_idx` |
+| `{run}/layers`, `layers/unclassified`, `findings` (also with `subject`), `metrics`, `/snapshots/{id}/derivations` | 2 | `inferred_layer_layer_idx`, `finding` primary key, `derivation_run_snapshot_idx` |
 
 ## Limitations
 

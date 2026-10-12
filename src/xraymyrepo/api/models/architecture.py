@@ -146,3 +146,11 @@ class FindingView(ApiModel):
     basis: Basis
     confidence: Confidence
     evidence: list[FactEvidence]
+
+
+class MetricView(ApiModel):
+    subject_key: str
+    """A node key (file metrics, e.g. ``fan_in``) or a group key (group metrics)."""
+    metric: str
+    value: float
+    provenance: Provenance

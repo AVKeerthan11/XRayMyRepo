@@ -26,6 +26,7 @@ from xraymyrepo.cim import (
 )
 from xraymyrepo.cim._base import MAX_EVIDENCE_SAMPLE
 from xraymyrepo.cim.provenance import Provenance
+from xraymyrepo.graph import strongly_connected
 
 from .index import SnapshotIndex
 from .lenses import LensResult
@@ -74,49 +75,6 @@ def layer_violations(index: SnapshotIndex, layers: dict[str, InferredLayer]) -> 
     return findings
 
 
-def _strongly_connected(nodes: list[str], adjacency: dict[str, list[str]]) -> list[list[str]]:
-    """Tarjan's algorithm, iterative; deterministic for sorted inputs."""
-    index_of: dict[str, int] = {}
-    low: dict[str, int] = {}
-    stack: list[str] = []
-    on_stack: set[str] = set()
-    components: list[list[str]] = []
-    counter = 0
-    for root in nodes:
-        if root in index_of:
-            continue
-        work = [(root, 0)]
-        while work:
-            node, i = work.pop()
-            if i == 0:
-                index_of[node] = low[node] = counter
-                counter += 1
-                stack.append(node)
-                on_stack.add(node)
-            successors = adjacency.get(node, [])
-            if i < len(successors):
-                work.append((node, i + 1))
-                successor = successors[i]
-                if successor not in index_of:
-                    work.append((successor, 0))
-                elif successor in on_stack:
-                    low[node] = min(low[node], index_of[successor])
-                continue
-            if low[node] == index_of[node]:
-                component = []
-                while True:
-                    member = stack.pop()
-                    on_stack.discard(member)
-                    component.append(member)
-                    if member == node:
-                        break
-                components.append(sorted(component))
-            if work:
-                parent = work[-1][0]
-                low[parent] = min(low[parent], low[node])
-    return components
-
-
 def group_cycles(index: SnapshotIndex, lens: LensResult, edges: list[GroupEdge]) -> list[Finding]:
     dependency = set(index.params.dependency_kinds)
     links: dict[tuple[str, str], list[GroupEdge]] = {}
@@ -127,7 +85,7 @@ def group_cycles(index: SnapshotIndex, lens: LensResult, edges: list[GroupEdge])
     for source, target in sorted(links):
         adjacency.setdefault(source, []).append(target)
     findings = []
-    for component in sorted(_strongly_connected(sorted(lens.groups), adjacency)):
+    for component in sorted(strongly_connected(sorted(lens.groups), adjacency)):
         if len(component) < 2:
             continue
         members = set(component)

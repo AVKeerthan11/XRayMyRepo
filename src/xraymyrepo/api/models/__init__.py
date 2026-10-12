@@ -12,6 +12,7 @@ from .architecture import (
     LayerCoverage,
     LayerMix,
     LensSummary,
+    MetricView,
     NodeLayer,
 )
 from .catalog import Repository, SnapshotDetail, SnapshotStats, SnapshotSummary
@@ -48,6 +49,7 @@ __all__ = [
     "LayerCoverage",
     "LayerMix",
     "LensSummary",
+    "MetricView",
     "NodeBrief",
     "NodeDetail",
     "NodeLayer",

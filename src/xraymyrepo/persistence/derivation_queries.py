@@ -421,14 +421,105 @@ def list_findings(
     run_id: int,
     *,
     rule: str | None = None,
+    subject: str | None = None,
     after: int | None = None,
     limit: int,
 ) -> list[tuple[int, Finding]]:
-    """(id, finding) in creation order, optionally of one rule."""
+    """(id, finding) in creation order, optionally of one rule and/or about one subject
+    (a node or group key among the finding's ``subject_keys``)."""
     rows = conn.execute(
         f"SELECT {R.FINDING_COLUMNS}, f.id{R.FINDING_FROM} WHERE f.run_id = %(run)s "
         "AND (%(rule)s::text IS NULL OR f.rule = %(rule)s) "
+        "AND (%(subject)s::text IS NULL OR f.subject_keys @> jsonb_build_array(%(subject)s::text)) "
         "AND (%(after)s::bigint IS NULL OR f.id > %(after)s) ORDER BY f.id LIMIT %(limit)s",
-        {"run": run_id, "rule": rule, "after": after, "limit": limit},
+        {"run": run_id, "rule": rule, "subject": subject, "after": after, "limit": limit},
     ).fetchall()
     return [(int(r[7]), R.finding(r)) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Metrics
+
+MetricSortKey = tuple[float, str]
+
+
+@dataclass(frozen=True)
+class MetricRecord:
+    subject_key: str
+    """A node key or a group key."""
+    metric: str
+    value: float
+    producer: str
+    rule: str | None
+
+
+def metric_sort_key(record: MetricRecord) -> MetricSortKey:
+    return (record.value, record.subject_key)
+
+
+def list_metrics(
+    conn: Connection,
+    run_id: int,
+    metric: str,
+    *,
+    descending: bool = True,
+    after: MetricSortKey | None = None,
+    limit: int,
+) -> list[MetricRecord]:
+    """One metric's values over every subject (nodes and groups), ranked by value, ties
+    broken by subject key ascending."""
+    params: dict[str, Any] = {"run": run_id, "metric": metric, "limit": limit}
+    keyset = ""
+    if after is not None:
+        params.update(value=after[0], key=after[1])
+        op = "<" if descending else ">"
+        keyset = (
+            f" AND (m.value {op} %(value)s "
+            "OR (m.value = %(value)s AND coalesce(n.key, g.key) > %(key)s))"
+        )
+    order = "DESC" if descending else "ASC"
+    rows = conn.execute(
+        "SELECT coalesce(n.key, g.key), m.metric, m.value, m.producer, m.rule FROM node_metric m "
+        "LEFT JOIN node n ON n.snapshot_id = m.snapshot_id AND n.id = m.node_id "
+        "LEFT JOIN derived_group g ON g.run_id = m.run_id AND g.id = m.group_id "
+        f"WHERE m.run_id = %(run)s AND m.metric = %(metric)s{keyset} "
+        f"ORDER BY m.value {order}, coalesce(n.key, g.key) LIMIT %(limit)s",
+        params,
+    ).fetchall()
+    return [MetricRecord(r[0], r[1], float(r[2]), r[3], r[4]) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Memberships (for mapping arbitrary files onto a lens)
+
+
+def memberships(
+    conn: Connection, run_id: int, lens: str, node_keys: Sequence[str]
+) -> dict[str, str]:
+    """node key -> group key in one lens, for the given files (unassigned ones omitted)."""
+    rows = conn.execute(
+        "SELECT n.key, g.key FROM group_member m "
+        "JOIN node n ON n.snapshot_id = m.snapshot_id AND n.id = m.node_id "
+        "JOIN derived_group g ON g.run_id = m.run_id AND g.id = m.group_id "
+        "WHERE m.run_id = %s AND m.lens = %s AND n.key = ANY(%s)",
+        (run_id, lens, list(node_keys)),
+    ).fetchall()
+    return {r[0]: r[1] for r in rows}
+
+
+@dataclass(frozen=True)
+class LensGroup:
+    key: str
+    parent_key: str | None
+    label: str | None
+
+
+def lens_groups(conn: Connection, run_id: int, lens: str) -> dict[str, LensGroup]:
+    """Every group of a lens, by key, in one query."""
+    rows = conn.execute(
+        "SELECT g.key, p.key, g.label FROM derived_group g "
+        "LEFT JOIN derived_group p ON p.run_id = g.run_id AND p.id = g.parent_id "
+        "WHERE g.run_id = %s AND g.lens = %s",
+        (run_id, lens),
+    ).fetchall()
+    return {r[0]: LensGroup(r[0], r[1], r[2]) for r in rows}

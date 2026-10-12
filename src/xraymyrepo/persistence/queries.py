@@ -614,3 +614,56 @@ def diagnostic_counts(conn: Connection, snapshot_id: int, key: str) -> tuple[int
 
 def _escape_like(value: str) -> str:
     return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+# ---------------------------------------------------------------------------
+# Whole-snapshot graph (for in-memory traversals)
+
+
+@dataclass(frozen=True)
+class GraphRecords:
+    """A snapshot's dependency graph as plain records, in four queries; turned into a
+    ``xraymyrepo.graph.DependencyGraph`` by its caller (persistence does not import it)."""
+
+    nodes: list[tuple[str, str, str, str | None, str | None]]
+    """(key, kind, name, parent key, extraction status)"""
+    edges: list[tuple[str, str, str, str]]
+    """(kind, source key, target key, basis)"""
+    roles: list[tuple[str, str]]
+    """(node key, role)"""
+    unresolved_imports: list[tuple[str, str]]
+    """(file key, reason) of every unresolved import reference"""
+
+
+def load_graph_records(conn: Connection, snapshot_id: int) -> GraphRecords:
+    nodes = conn.execute(
+        "SELECT n.key, n.kind, n.name, p.key, n.extraction_status FROM node n "
+        "LEFT JOIN node p ON p.snapshot_id = n.snapshot_id AND p.id = n.parent_id "
+        "WHERE n.snapshot_id = %s",
+        (snapshot_id,),
+    ).fetchall()
+    edges = conn.execute(
+        "SELECT e.kind, s.key, t.key, e.basis FROM edge e "
+        "JOIN node s ON s.snapshot_id = e.snapshot_id AND s.id = e.source_id "
+        "JOIN node t ON t.snapshot_id = e.snapshot_id AND t.id = e.target_id "
+        "WHERE e.snapshot_id = %s",
+        (snapshot_id,),
+    ).fetchall()
+    roles = conn.execute(
+        "SELECT cn.key, c.value FROM classification c "
+        "JOIN node cn ON cn.snapshot_id = c.snapshot_id AND cn.id = c.node_id "
+        "WHERE c.snapshot_id = %s AND c.facet = 'role'",
+        (snapshot_id,),
+    ).fetchall()
+    unresolved = conn.execute(
+        "SELECT f.key, u.reason FROM unresolved_reference u "
+        "JOIN node f ON f.snapshot_id = u.snapshot_id AND f.id = u.file_id "
+        "WHERE u.snapshot_id = %s AND u.ref_kind = 'import'",
+        (snapshot_id,),
+    ).fetchall()
+    return GraphRecords(
+        nodes=[(r[0], r[1], r[2], r[3], r[4]) for r in nodes],
+        edges=[(r[0], r[1], r[2], r[3]) for r in edges],
+        roles=[(r[0], r[1]) for r in roles],
+        unresolved_imports=[(r[0], r[1]) for r in unresolved],
+    )

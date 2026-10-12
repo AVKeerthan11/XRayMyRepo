@@ -1,0 +1,297 @@
+{
+  "run": {
+    "snapshot": {
+      "repository": {
+        "host": "github.com",
+        "owner": "xraymyrepo",
+        "name": "golden-fixture"
+      },
+      "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+      "extractor_version": "1.0.0",
+      "config_hash": "sha256:a5d6cb9635a6c6c6712120de6a01e3d949e5d239e88f48ec6713881bfe7206ef"
+    },
+    "algorithm": "health",
+    "algorithm_version": "1.0.0",
+    "params_hash": "sha256:99e2cadc1365dd6702d7af977b0a5e2bebe74af17549f2a3903939b2619d3b09",
+    "status": "complete"
+  },
+  "metrics": [
+    {
+      "node_key": "/",
+      "metric": "health_blind_spot_files",
+      "value": 2.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "/",
+      "metric": "health_files_considered",
+      "value": 9.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "/",
+      "metric": "health_hidden_import_files",
+      "value": 2.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/__init__.py",
+      "metric": "fan_in",
+      "value": 0.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/__init__.py",
+      "metric": "fan_out",
+      "value": 0.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/db.py",
+      "metric": "fan_in",
+      "value": 1.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/db.py",
+      "metric": "fan_out",
+      "value": 0.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/main.py",
+      "metric": "fan_in",
+      "value": 0.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/main.py",
+      "metric": "fan_out",
+      "value": 1.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/plugins.py",
+      "metric": "fan_in",
+      "value": 0.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/plugins.py",
+      "metric": "fan_out",
+      "value": 0.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/users/__init__.py",
+      "metric": "fan_in",
+      "value": 0.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/users/__init__.py",
+      "metric": "fan_out",
+      "value": 0.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/users/models.py",
+      "metric": "fan_in",
+      "value": 1.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/users/models.py",
+      "metric": "fan_out",
+      "value": 1.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/users/routes.py",
+      "metric": "fan_in",
+      "value": 1.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/users/routes.py",
+      "metric": "fan_out",
+      "value": 2.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/users/schemas.py",
+      "metric": "fan_in",
+      "value": 1.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/users/schemas.py",
+      "metric": "fan_out",
+      "value": 0.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/users/service.py",
+      "metric": "fan_in",
+      "value": 2.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    },
+    {
+      "node_key": "backend/app/users/service.py",
+      "metric": "fan_out",
+      "value": 1.0,
+      "provenance": {
+        "producer": "health",
+        "rule": "health.metrics"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "rule": "health.coverage.blind_spot",
+      "severity": "low",
+      "subject_keys": [
+        "backend/app/legacy.py"
+      ],
+      "message": "Dependencies of backend/app/legacy.py are not fully known: extraction failed (parse_error)",
+      "basis": "observed",
+      "confidence": "high",
+      "evidence": [
+        {
+          "start_line": 1,
+          "start_col": 11,
+          "end_line": 1,
+          "end_col": 12,
+          "basis": "observed",
+          "provenance": {
+            "producer": "health",
+            "rule": "health.coverage.blind_spot"
+          },
+          "type": "span",
+          "file_key": "backend/app/legacy.py"
+        }
+      ]
+    },
+    {
+      "rule": "health.coverage.blind_spot",
+      "severity": "low",
+      "subject_keys": [
+        "backend/app/plugins.py"
+      ],
+      "message": "Dependencies of backend/app/plugins.py are not fully known: 2 unresolved reference(s) (dynamic: 1, not_found: 1)",
+      "basis": "observed",
+      "confidence": "high",
+      "evidence": [
+        {
+          "start_line": 3,
+          "start_col": 0,
+          "end_line": 3,
+          "end_col": 26,
+          "basis": "observed",
+          "provenance": {
+            "producer": "health",
+            "rule": "health.coverage.blind_spot"
+          },
+          "type": "span",
+          "file_key": "backend/app/plugins.py"
+        },
+        {
+          "start_line": 7,
+          "start_col": 11,
+          "end_line": 7,
+          "end_col": 40,
+          "basis": "observed",
+          "provenance": {
+            "producer": "health",
+            "rule": "health.coverage.blind_spot"
+          },
+          "type": "span",
+          "file_key": "backend/app/plugins.py"
+        }
+      ]
+    },
+    {
+      "rule": "health.module.unreferenced",
+      "severity": "info",
+      "subject_keys": [
+        "backend/app/plugins.py"
+      ],
+      "message": "No repository file depends on backend/app/plugins.py; 2 file(s) have unresolved dynamic/unknown imports or did not parse, so a dependent may be hidden",
+      "basis": "inferred",
+      "confidence": "low",
+      "evidence": [
+        {
+          "basis": "inferred",
+          "provenance": {
+            "producer": "health",
+            "rule": "health.module.unreferenced"
+          },
+          "type": "derived",
+          "node_keys": [
+            "backend/app/plugins.py"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -29,8 +29,12 @@ The questions it answers, and where the answer lives:
 
 ## Principles
 
-* **Separate from extraction.** `architecture` depends only on `cim`: no analyzer, no database
+* **Separate from extraction.** `architecture` depends only on `cim` and the shared pure
+  `xraymyrepo.graph`: no analyzer, no database, and not `insights`
   (`tests/test_architecture.py` enforces it). Snapshot tables are never written.
+  * `graph` holds the file-level view of a snapshot (`FileGraph`), the compact `DependencyGraph` used by
+    change impact, strongly connected components and `validate_against`. `architecture.validate_against`
+    re-exports the latter.
 * **Never fake facts.** Everything inferred has `basis = inferred`, a `confidence`, `provenance.rule` and
   `derived` evidence pointing at the facts used. The `directory` lens is the only non-inferred part: a file
   being in a directory is observed.

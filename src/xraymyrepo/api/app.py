@@ -17,7 +17,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import errors
 from .db import create_pool
-from .routes import catalog, derivations, nodes, relationships, service
+from .graphs import GraphCache
+from .routes import catalog, derivations, impact, nodes, relationships, service
 from .settings import Settings
 
 API_PREFIX = "/api/v1"
@@ -44,6 +45,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         summary="Read-only access to persisted Codebase Intelligence Model snapshots.",
         lifespan=lifespan,
     )
+    app.state.graph_cache = GraphCache(settings.impact_cache_size)
     errors.install(app)
     if settings.cors_origins:
         app.add_middleware(
@@ -53,7 +55,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             allow_headers=["*"],
         )
     app.include_router(service.router)
-    for module in (catalog, nodes, relationships, derivations):
+    for module in (catalog, nodes, relationships, derivations, impact):
         app.include_router(module.router, prefix=API_PREFIX)
 
     generate_openapi = app.openapi

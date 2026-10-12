@@ -131,3 +131,20 @@ def test_large_snapshot_responds_quickly(large: tuple[TestClient, int]) -> None:
         started = time.perf_counter()
         get(client, path, **params)
         assert time.perf_counter() - started < 2.0, path
+
+
+def test_impact_cold_and_warm(large: tuple[TestClient, int]) -> None:
+    """Change impact of the shared function on 8 000 nodes: one graph load, then served
+    from the per-process cache."""
+    client, sid = large
+    cache = client.app.state.graph_cache  # type: ignore[attr-defined]
+    misses = cache.misses
+    timings = []
+    for _ in range(2):
+        started = time.perf_counter()
+        report = get(client, f"/snapshots/{sid}/impact", node=SHARED, depth=10, limit=100)
+        timings.append(time.perf_counter() - started)
+    assert report["summary"]["affected_files"] == 2001  # hub.py and its 2 000 importers
+    assert len(report["items"]) == 100 and report["next_cursor"]
+    assert timings[0] < 5.0 and timings[1] < 2.0, timings
+    assert cache.misses == misses + 1  # loaded once, then served from the cache
