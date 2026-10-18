@@ -1,0 +1,53 @@
+{
+  "run": {
+    "from_snapshot": {"repository": {"host": "github.com", "owner": "xraymyrepo", "name": "comparison-fixture"}, "commit_sha": "1111111111111111111111111111111111111111", "extractor_version": "0.2.0", "config_hash": "sha256:bf362b58b1b8e8292e70b2708ca6ecf932c88a47746dcf472d5377f8ef357563"},
+    "to_snapshot": {"repository": {"host": "github.com", "owner": "xraymyrepo", "name": "comparison-fixture"}, "commit_sha": "2222222222222222222222222222222222222222", "extractor_version": "0.2.0", "config_hash": "sha256:bf362b58b1b8e8292e70b2708ca6ecf932c88a47746dcf472d5377f8ef357563"},
+    "algorithm": "comparison",
+    "algorithm_version": "1.0.0",
+    "params_hash": "sha256:6f17efed0a7531d2200d484a305000aed1207a82e513d51c09e074161fce1fbf",
+    "incomparable": [],
+    "status": "complete"
+  },
+  "nodes": [
+    {"change": "unchanged", "kind": "repository", "from_key": "/", "to_key": "/", "match_method": "same_key", "confidence": "high"},
+    {"change": "unchanged", "kind": "directory", "from_key": "shop", "to_key": "shop", "match_method": "same_key", "confidence": "high"},
+    {"change": "unchanged", "kind": "file", "from_key": "shop/__init__.py", "to_key": "shop/__init__.py", "match_method": "same_key", "confidence": "high"},
+    {"change": "removed", "kind": "directory", "from_key": "shop/a", "confidence": "high"},
+    {"change": "removed", "kind": "file", "from_key": "shop/a/template.py", "confidence": "high", "move_ambiguous": true},
+    {"change": "removed", "kind": "function", "from_key": "shop/a/template.py#render", "confidence": "high"},
+    {"change": "added", "kind": "directory", "to_key": "shop/b", "confidence": "high"},
+    {"change": "added", "kind": "file", "to_key": "shop/b/template.py", "confidence": "high", "move_ambiguous": true},
+    {"change": "added", "kind": "function", "to_key": "shop/b/template.py#render", "confidence": "high"},
+    {"change": "added", "kind": "directory", "to_key": "shop/c", "confidence": "high"},
+    {"change": "added", "kind": "file", "to_key": "shop/c/template.py", "confidence": "high", "move_ambiguous": true},
+    {"change": "added", "kind": "function", "to_key": "shop/c/template.py#render", "confidence": "high"},
+    {"change": "added", "kind": "file", "to_key": "shop/catalog.py", "confidence": "high"},
+    {"change": "added", "kind": "function", "to_key": "shop/catalog.py#find", "confidence": "high"},
+    {"change": "modified", "kind": "file", "from_key": "shop/checkout.py", "to_key": "shop/checkout.py", "match_method": "same_key", "confidence": "high"},
+    {"change": "unchanged", "kind": "function", "from_key": "shop/checkout.py#checkout", "to_key": "shop/checkout.py#checkout", "match_method": "same_key", "confidence": "high"},
+    {"change": "removed", "kind": "file", "from_key": "shop/consts.py", "confidence": "high"},
+    {"change": "removed", "kind": "file", "from_key": "shop/legacy.py", "confidence": "high"},
+    {"change": "removed", "kind": "function", "from_key": "shop/legacy.py#old_discount", "confidence": "high"},
+    {"change": "added", "kind": "directory", "to_key": "shop/new", "confidence": "high"},
+    {"change": "moved", "kind": "file", "from_key": "shop/old/shipping.py", "to_key": "shop/new/shipping.py", "match_method": "same_content_hash", "confidence": "medium"},
+    {"change": "moved", "kind": "function", "from_key": "shop/old/shipping.py#shipping_cost", "to_key": "shop/new/shipping.py#shipping_cost", "match_method": "same_content_hash", "confidence": "medium"},
+    {"change": "removed", "kind": "directory", "from_key": "shop/old", "confidence": "high"},
+    {"change": "modified", "kind": "file", "from_key": "shop/pricing.py", "to_key": "shop/pricing.py", "match_method": "same_key", "confidence": "high"},
+    {"change": "unchanged", "kind": "type", "from_key": "shop/pricing.py#Cart", "to_key": "shop/pricing.py#Cart", "match_method": "same_key", "confidence": "high"},
+    {"change": "unchanged", "kind": "function", "from_key": "shop/pricing.py#Cart.total", "to_key": "shop/pricing.py#Cart.total", "match_method": "same_key", "confidence": "high"},
+    {"change": "modified", "kind": "function", "from_key": "shop/pricing.py#price_with_tax", "to_key": "shop/pricing.py#price_with_tax", "match_method": "same_key", "confidence": "high"},
+    {"change": "modified", "kind": "file", "from_key": "shop/report.py", "to_key": "shop/report.py", "match_method": "same_key", "confidence": "high"},
+    {"change": "undetermined", "kind": "function", "from_key": "shop/report.py#summarize", "confidence": "low"},
+    {"change": "added", "kind": "directory", "to_key": "shop/settings", "confidence": "high"},
+    {"change": "added", "kind": "file", "to_key": "shop/settings/consts.py", "confidence": "high"},
+    {"change": "modified", "kind": "file", "from_key": "shop/util.py", "to_key": "shop/util.py", "match_method": "same_key", "confidence": "high"},
+    {"change": "unchanged", "kind": "function", "from_key": "shop/util.py#slugify", "to_key": "shop/util.py#slugify", "match_method": "same_key", "confidence": "high"}
+  ],
+  "edges": [
+    {"change": "modified", "kind": "IMPORTS", "from_ref": {"ref": "edge", "kind": "IMPORTS", "source_key": "shop/checkout.py", "target_key": "shop/old/shipping.py#shipping_cost"}, "to_ref": {"ref": "edge", "kind": "IMPORTS", "source_key": "shop/checkout.py", "target_key": "shop/new/shipping.py#shipping_cost"}, "confidence": "medium"},
+    {"change": "added", "kind": "IMPORTS", "to_ref": {"ref": "edge", "kind": "IMPORTS", "source_key": "shop/pricing.py", "target_key": "shop/catalog.py#find"}, "confidence": "high"},
+    {"change": "removed", "kind": "IMPORTS", "from_ref": {"ref": "edge", "kind": "IMPORTS", "source_key": "shop/pricing.py", "target_key": "shop/legacy.py#old_discount"}, "confidence": "high"},
+    {"change": "undetermined", "kind": "IMPORTS", "from_ref": {"ref": "edge", "kind": "IMPORTS", "source_key": "shop/report.py", "target_key": "shop/pricing.py#Cart"}, "confidence": "low"}
+  ],
+  "unchanged_edges": 1
+}

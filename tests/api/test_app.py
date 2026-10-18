@@ -12,6 +12,7 @@ from pydantic import TypeAdapter
 
 from xraymyrepo.api import Settings, create_app, cursors
 from xraymyrepo.api.errors import ApiError
+from xraymyrepo.cim import EdgeChangeKind
 
 from ..conftest import ROOT
 
@@ -112,3 +113,17 @@ def test_openapi_documents_problems_and_no_write_methods() -> None:
             documented = operations["get"]["responses"]
             assert "application/problem+json" in documented["422"]["content"], path
             assert "503" in documented, path
+
+
+def test_openapi_lists_only_edge_changes_that_are_rows() -> None:
+    """Listed edge changes never include ``unchanged`` (only counted), in the response
+    schema and in the ``change`` filter, as in migration 0004's edge_change_change_check."""
+    spec = create_app(UNREACHABLE).openapi()
+    rows = [k.value for k in EdgeChangeKind if k is not EdgeChangeKind.UNCHANGED]
+    view = spec["components"]["schemas"]["EdgeChangeView"]["properties"]["change"]
+    assert view["enum"] == rows
+    operation = spec["paths"]["/api/v1/comparisons/{comparison_id}/edge-changes"]["get"]
+    change = next(p for p in operation["parameters"] if p["name"] == "change")
+    assert change["schema"]["anyOf"][0]["items"]["enum"] == rows
+    counts = spec["components"]["schemas"]["ChangeCounts"]["properties"]["edges"]
+    assert counts["propertyNames"] == {"$ref": "#/components/schemas/EdgeChangeKind"}

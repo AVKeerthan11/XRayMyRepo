@@ -37,7 +37,10 @@ analyzer bug and is raised, never repaired. Invalid inputs (for example a malfor
 
 The snapshot declares `coverage = [python: IMPORTS]` and `languages = [python, toml]`. Producers:
 `structure-extractor` (tree, origins), `python-extractor` (declarations, imports), `manifest-extractor`
-(`pyproject.toml`). All three have version `ANALYZER_VERSION` (`0.1.0`) and the hash of an empty config.
+(`pyproject.toml`). All three have version `ANALYZER_VERSION` (`0.2.0`) and the hash of an empty config.
+
+`0.2.0` adds declaration fingerprints (§3.1); `0.1.0` snapshots have none. The version is the snapshot's
+`extractor_version`, so snapshots of the two versions are never mistaken for the same analysis.
 
 ## 1. Inventory
 
@@ -102,8 +105,49 @@ Parsed with the standard library `ast`.
 * Spans include decorators. Columns are converted from `ast`'s UTF-8 byte offsets to code points.
 * Declarations are observed: they carry `span` and provenance (`py.declaration.class`,
   `py.declaration.function`, `py.declaration.type_alias`) and no evidence list, as in the golden fixture.
-* Fingerprints (`content_hash`, `signature_hash`) are not produced yet (they need the normalized token
-  stream, which is not implemented), so they are left empty as the contract allows.
+* Every declaration carries both fingerprints (§3.1).
+
+### 3.1 Fingerprints
+
+Computed by `python/fingerprint.py` with `cim.content_hash` / `cim.signature_hash`. Neither is part of
+the key. They serve snapshot comparison: same key + same fingerprints = unchanged declaration.
+
+**`content_hash`**: the declaration's normalized token stream (`tokenize` over the whole decoded file, so
+token positions agree with the `ast` spans).
+
+| Rule | Effect |
+|---|---|
+| A declaration's tokens are those lying entirely inside its span (decorators included). | Nested declarations are part of their parent: a method edit changes its class. |
+| A merged node (`@overload` stubs, property setter/getter/deleter) is all its parts in source order, separated by `<DECL>`. | A setter-only or stub-only edit changes the node. |
+| `COMMENT` and `NL` tokens are dropped; whitespace and backslash continuations are never tokens. | Comments, blank lines, spacing, wrapping and line endings (LF/CRLF/CR) do not count. |
+| `NEWLINE` → `<NL>`, `INDENT` → `<IN>`, `DEDENT` → `<DE>`; markers before the first and after the last token are dropped. | Nesting counts, indentation width and tabs do not, nor does the code around the declaration. |
+| Names, operators, numbers and string literals are verbatim (prefix and quotes included). | `'a'` vs `"a"` and docstring edits count. Default values count here (not in the signature). |
+| An f-string (3.14: t-string) is one token: its exact source text. | Whitespace inside it counts (`f"{x = }"` prints it); `tokenize` would report escaped braces unescaped. |
+| The declared name (after `def` / `class` / `type`) becomes `<NAME>`. | A renamed declaration with the same body keeps its hash; uses of the name in the body still count. |
+
+**`signature_hash`**: the contract's shapes, from the `ast`, with annotations and bases as `ast.unparse` text
+(so their formatting does not count).
+
+* Functions: `SignatureShape` = `function_kind`, `is_async`, parameters in order (name; kind
+  `positional_only` / `positional` / `var_positional` / `keyword_only` / `var_keyword`; annotation; whether
+  it has a default, not the value) and the return annotation. A merged node uses the property getter /
+  the overload implementation (the first stub when there is none). PEP 695 function type parameters are
+  not part of the shape (they are content).
+* Classes: `TypeShape` = `class`, bases in order, PEP 695 type parameters (`T: int`). Class keywords
+  (`metaclass=`) are not part of the shape.
+* `type` aliases: `TypeShape` = `type_alias` and type parameters; the aliased value is content.
+
+**Failures** never cost a declaration its node: a fingerprint that cannot be computed is left empty and
+reported as a `warning` (`fingerprint_error`, `py.fingerprint`, with the declaration's span); the file
+stays `full`. This happens when a token contains `\x1f` (a raw unit separator inside a literal, which
+`content_hash` rejects) or, in principle, when `tokenize` fails on a file `ast` accepted. Each fingerprint
+is computed independently, so the signature survives a content failure.
+
+**Python versions.** `requires-python >= 3.12`. From 3.12 `tokenize` uses the interpreter's tokenizer
+(PEP 701: f-strings are `FSTRING_START` / `FSTRING_MIDDLE` / `FSTRING_END`), which the rules handle;
+3.14 t-strings are handled the same way. `ast.unparse` text is not guaranteed identical across Python
+versions; fingerprints are reproducible for one analyzer version on one Python minor version. The tests
+pin the current outputs.
 
 ### Failures (one bad file never stops the analysis)
 
@@ -113,6 +157,7 @@ Parsed with the standard library `ast`.
 | syntax error, null bytes, too deeply nested | failed | `parse_error`, `py.parse` (span from `SyntaxError`) |
 | crash while extracting declarations | failed | `extractor_error`, `py.declaration` |
 | crash while extracting imports | partial (declarations kept) | `extractor_error`, `py.import` |
+| a declaration cannot be fingerprinted | full (that fingerprint empty) | `fingerprint_error` (warning), `py.fingerprint` |
 
 ## 4. Imports and resolution
 
@@ -194,4 +239,4 @@ Two documented differences:
 * `.gitignore` is not read; only `ignore_globs` apply. Blob ids come from the working tree, so analyze a
   clean checkout of the recorded commit.
 * Not implemented: TypeScript, Tree-sitter, `CALLS`, `INHERITS`, `HANDLES`, `TESTS`, `REQUIRES`, roles
-  other than `manifest`, fingerprints, persistence.
+  other than `manifest`, persistence.

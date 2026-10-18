@@ -33,6 +33,11 @@ files (LF line endings, enforced by `.gitattributes`) and are checked by `tests/
 | entrypoints | `main.py` (heuristic), `src/index.ts` (observed, `package.json#/main`) | role `entrypoint` |
 | layers | none | no snapshot `layer` classifications: v1 defines no layer convention rules yet |
 | coverage | snapshot `coverage` | `CALLS` not declared, so no CALLS edges and no claim of absence |
+| fingerprints | every Python `type` / `function` | `content_hash` + `signature_hash` (docs/analyzer/python-v1.md §3.1); TypeScript symbols have none (no extractor defines its token stream yet) |
+
+The fingerprints are the one machine-computed part: sha256 values cannot be written by hand. They were
+produced by the Python analyzer (0.2.0) and reviewed; `tests/test_golden.py` recomputes three of them from
+token streams and shapes written out by hand.
 
 When the fixture changes, update `expected_cim.json` by hand in the same commit. The tests fail on any drift
 in blob ids, spans or files.

@@ -32,9 +32,10 @@ The app starts even when the database is down; `/ready` answers 503 until it is 
 
 ```text
 api/            FastAPI app, routes, response models, errors, cursors, CIM → API mapping
-persistence/    snapshots.py, derivations.py (write + full load), queries.py, derivation_queries.py
-                (focused reads), _rows.py, _derivation_rows.py (row ↔ CIM)
-architecture/   derivation (CIM in, CIM out); orchestration.py runs load → derive → persist
+persistence/    snapshots.py, derivations.py, comparisons.py (write + full load), queries.py,
+                derivation_queries.py, comparison_queries.py (focused reads), _rows.py,
+                _derivation_rows.py, _comparison_rows.py (row ↔ CIM)
+architecture/   derivation (CIM in, CIM out); orchestration.py runs load → derive/compare → persist
 cim/            the domain contract
 analyzer/       independent of persistence and the API
 ```
@@ -48,7 +49,8 @@ through persistence, and for on-request computations (change impact) it may run 
 * **API sessions are read-only** (`default_transaction_read_only`), on top of the snapshot immutability triggers.
 * **Only complete snapshots are served.** Every snapshot-scoped endpoint checks the snapshot first: unknown is
   404 `snapshot_not_found`, pending or failed is 409 `snapshot_not_complete`. Likewise every run-scoped
-  endpoint checks the run: 404 `derivation_not_found`, 409 `derivation_not_complete`.
+  endpoint checks the run: 404 `derivation_not_found`, 409 `derivation_not_complete`. Every
+  comparison-scoped endpoint checks the comparison: 404 `comparison_not_found`, 409 `comparison_not_complete`.
 * **Response models are the API's own** (`api/models`). CIM *value types* (enums, `SourceSpan`, `Provenance`,
   evidence variants, per-kind attribute models, `AnalysisConfig`, `Producer`, `CoverageDeclaration`,
   `UnresolvedReference`, `ExtractionIssue`, `RepositoryRef`) appear inside them unchanged, so a change to one of
@@ -94,6 +96,35 @@ and confidence: docs/architecture/architecture-v1.md. `{run}` is `/derivations/{
 | `{run}/layers/unclassified` | Files considered but not classified | `limit`, `cursor` | `Page[NodeBrief]` |
 | `{run}/findings` | Findings in creation order: layer violations and group cycles (architecture), health findings (health) | `rule`, `subject` (node or group key), `limit`, `cursor` | `Page[FindingView]` |
 | `{run}/metrics` | One metric over every subject, ranked by value (ties by subject key) | `metric` (required), `order` (`desc`/`asc`), `limit`, `cursor` | `Page[MetricView]` |
+
+### Snapshot comparison
+
+What changed between two snapshots of one repository, as stored by
+`xraymyrepo.orchestration.compare_snapshots`; the API only reads it. Rules and confidence:
+docs/comparison/comparison-v1.md. `{c}` is `/comparisons/{comparison_id}`.
+
+| Path | Purpose | Parameters | Response |
+| --- | --- | --- | --- |
+| `/snapshots/{id}/comparisons` | Comparisons with the snapshot on either side, newest first (any status) | `limit`, `cursor` | `Page[ComparisonRunSummary]` |
+| `{c}` | Both snapshots, algorithm, params, `incomparable` reasons, change counts | – | `ComparisonDetail` |
+| `{c}/summary` | Change counts by kind (nodes and edges, every kind, unchanged edges included) | – | `ChangeCounts` |
+| `{c}/node-changes` | One row per node of either snapshot, in key order | `change`*, `kind`*, `limit`, `cursor` | `Page[NodeChangeView]` |
+| `{c}/edge-changes` | Changed and undetermined edges, by kind, source and target key | `change`*, `kind`*, `limit`, `cursor` | `Page[EdgeChangeView]` |
+
+* **`incomparable`** lists how the two snapshot identities differ (`extractor_version_differs`,
+  `config_differs`). When it is not empty, no change has `high` confidence.
+* **Node changes** cite nodes by key in their own snapshot: `from_key` in `from`, `to_key` in `to`.
+  `key` is the `to` key, else the `from` key. A moved node has both keys and `match_method:
+  "same_content_hash"`. `move_ambiguous` marks an added or removed file whose content was found on the
+  other side, but not uniquely.
+* **Undetermined** (`low`) means the snapshots cannot tell, never a guess:
+  * node changes have both keys (fingerprints not comparable) or one key (the file failed to extract on the
+    other side);
+  * edge changes have exactly one ref.
+* **Unchanged edges are counted, never listed.** They appear in `summary.edges.unchanged`;
+  `edge-changes?change=unchanged` is 422 `validation_error`, and the OpenAPI enum of listed edge changes
+  (`ListedEdgeChangeKind`) leaves it out. Edge refs are in their own snapshot's keys
+  (`from_ref` in `from`, `to_ref` in `to`); open them with `/snapshots/{id}/edges/by-ref`.
 
 ### Change impact
 
@@ -203,8 +234,8 @@ Every error is RFC 9457 `application/problem+json`:
 
 | Status | `code` |
 | --- | --- |
-| 404 | `repository_not_found`, `snapshot_not_found`, `node_not_found` (also for `parent`/`node`), `edge_not_found`, `derivation_not_found`, `lens_not_found`, `group_not_found`, `not_found` (no such route) |
-| 409 | `snapshot_not_complete`, `derivation_not_complete` |
+| 404 | `repository_not_found`, `snapshot_not_found`, `node_not_found` (also for `parent`/`node`), `edge_not_found`, `derivation_not_found`, `lens_not_found`, `group_not_found`, `comparison_not_found`, `not_found` (no such route) |
+| 409 | `snapshot_not_complete`, `derivation_not_complete`, `comparison_not_complete` |
 | 422 | `validation_error` (with `errors[]`: `loc`, `msg`, `type`); `invalid_key` (not a well-formed CIM node or group key, so it can never exist; also for `findings?subject=` and impact seeds); `invalid_parameters` (`group-edges` without exactly one of `lens`/`within`/`group`, or `direction` without `group`; impact with the repository root or more than 50 seeds) |
 | 400 | `invalid_cursor` |
 | 405 | `method_not_allowed` |
@@ -216,9 +247,9 @@ a project group has no direct members.
 
 ## Queries and cost
 
-Each request runs a fixed number of SQL statements, independent of page size (asserted in
-`tests/api/test_api_db.py::test_query_budget` and `tests/api/test_derivations_api_db.py::test_query_budget`),
-on the indexes of migrations 0001 and 0003:
+Each request runs a fixed number of SQL statements, independent of page size (asserted in the
+`test_query_budget` tests of `tests/api/test_api_db.py`, `test_derivations_api_db.py` and
+`test_comparisons_api_db.py`), on the indexes of migrations 0001, 0003 and 0004:
 
 | Endpoint | Statements | Main indexes |
 | --- | --- | --- |
@@ -234,6 +265,8 @@ on the indexes of migrations 0001 and 0003:
 | `/snapshots/{id}/impact`, `impact/blind-spots` | 1 with a cached graph, 5 when the graph is loaded | snapshot primary key; loading: `node_key_unique`, `edge` scans of one snapshot |
 | `/derivations/{run}/impact/groups` | 4 with a cached graph | `group_member` primary key, `derived_group_parent_idx` |
 | `{run}/layers`, `layers/unclassified`, `findings` (also with `subject`), `metrics`, `/snapshots/{id}/derivations` | 2 | `inferred_layer_layer_idx`, `finding` primary key, `derivation_run_snapshot_idx` |
+| `{c}` | 5 | `snapshot_comparison` primary key, snapshot primary key |
+| `{c}/summary`, `{c}/node-changes`, `{c}/edge-changes`, `/snapshots/{id}/comparisons` | 2 | `node_change` primary key, `node_change_change_idx`, `node_change_kind_idx`; `edge_change` primary key; `snapshot_comparison_identity_key`, `snapshot_comparison_to_snapshot_idx` |
 
 ## Limitations
 
@@ -245,8 +278,9 @@ on the indexes of migrations 0001 and 0003:
   not stored.
 * **No source text.** Spans and `blob_sha` are exposed; serving file content needs a source/blob store
   decision.
-* **No writes.** Analysis, persistence and derivation run outside the API: derivations through
-  `xraymyrepo.orchestration.derive_architecture`. CLI commands for persisting and deriving are planned
+* **No writes.** Analysis, persistence, derivation and comparison run outside the API: derivations through
+  `xraymyrepo.orchestration.derive_architecture`, comparisons through `compare_snapshots`. There is no
+  endpoint that triggers a comparison. CLI commands for persisting and deriving are planned
   follow-ups.
 * **Architecture results are per run.** There is no "latest derivation" shortcut: list a snapshot's runs
   and pick one (by algorithm, version and `params_hash`). Dependencies on external packages are not rolled

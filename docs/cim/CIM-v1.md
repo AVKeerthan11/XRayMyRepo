@@ -273,6 +273,44 @@ Known v1 limitation: endpoint keys contain their package scope, and endpoints ha
 renaming a package (or moving an endpoint to another package) shows its endpoints as removed and added. There
 is no endpoint-specific or fuzzy matching to bridge that.
 
+### Snapshot comparison
+
+`SnapshotComparison(run, nodes, edges, unchanged_edges)` records what changed between two complete snapshots
+of one repository (`src/xraymyrepo/cim/comparison.py`). It is additive: no snapshot model or schema version
+changes.
+
+* **Run.** `ComparisonRun(from_snapshot, to_snapshot, algorithm, algorithm_version, params_hash, incomparable,
+  status)`. The two snapshots are different, of the same repository; the direction is the caller's (there is
+  no git history).
+* **Comparability.** `incomparable` lists exactly how the identities differ: `extractor_version_differs`,
+  `config_differs`. A comparison that lists any reason is *not fully comparable*: a difference may come from
+  the extraction rather than the code, so **no node or edge change has `high` confidence**.
+* **Node changes**, one per node of either snapshot; a key appears at most once per side, and a key present
+  in both snapshots is always matched by key (never removed + added, never moved away):
+
+  | `change` | `from_key` / `to_key` | `match_method` | `confidence` |
+  |---|---|---|---|
+  | `added` / `removed` | only `to_key` / only `from_key` | none | high or medium |
+  | `unchanged`, `modified` | both, equal | `same_key` | high or medium |
+  | `moved` | both, different | `same_content_hash` | medium |
+  | `undetermined` | both and equal (`same_key`), or only one (no match) | | low |
+
+  `undetermined` is explicit: the snapshots cannot tell (a missing fingerprint, different extractor versions,
+  a containing file that did not parse), and nothing is guessed. `move_ambiguous` marks an added or removed
+  *file* whose content occurs on the other side, but not uniquely (two identical candidates, or a copy left
+  behind), and which was therefore not matched.
+* **Lineage** is the existing `NodeLineage`, built from every matched node change. `same_key` lineage is
+  always `high` (key equality is certain whatever the extractor; the comparability cap applies to the
+  change), `same_content_hash` lineage carries the change's `medium`.
+* **Edge changes** are compared after node matching: a `from` edge is the same edge in `to` when the kinds
+  are equal and both ends are matched to its ends. `added` has only a `to_ref`, `removed` only a `from_ref`,
+  `modified` both (ends matched to each other); each ref uses its own snapshot's keys and names nodes of
+  that snapshot. `undetermined` (exactly one ref, `low`) is an edge the other snapshot could not show (for
+  example the imports of a file that failed to parse there). Unchanged edges are not records, only counted
+  (`unchanged_edges`). The algorithm and its rules: docs/comparison/comparison-v1.md.
+* `summary()` counts node and edge changes by kind (every kind present); `canonical()` orders node changes
+  by key (`to`, else `from`) and edge changes by ref.
+
 ## 9. Interpretation layer
 
 `Annotation(id, snapshot, subject, kind ∈ label | summary | explanation, content, model, prompt_version,

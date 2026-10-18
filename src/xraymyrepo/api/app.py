@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import errors
 from .db import create_pool
 from .graphs import GraphCache
-from .routes import catalog, derivations, impact, nodes, relationships, service
+from .routes import catalog, comparisons, derivations, impact, nodes, relationships, service
 from .settings import Settings
 
 API_PREFIX = "/api/v1"
@@ -55,7 +55,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             allow_headers=["*"],
         )
     app.include_router(service.router)
-    for module in (catalog, nodes, relationships, derivations, impact):
+    for module in (catalog, nodes, relationships, derivations, impact, comparisons):
         app.include_router(module.router, prefix=API_PREFIX)
 
     generate_openapi = app.openapi

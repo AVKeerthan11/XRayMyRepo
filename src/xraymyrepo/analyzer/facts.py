@@ -142,6 +142,8 @@ class SymbolFact:
     type_kind: TypeKind | None = None
     function_kind: FunctionKind | None = None
     is_async: bool = False
+    content_hash: str | None = None
+    signature_hash: str | None = None
 
 
 class ImportForm(StrEnum):

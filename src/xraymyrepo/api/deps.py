@@ -9,7 +9,8 @@ from fastapi import Depends, Path, Query, Request
 from xraymyrepo.cim import InvalidKeyError, NodeKind, SnapshotStatus
 from xraymyrepo.cim.enums import SNAPSHOT_NODE_KINDS
 from xraymyrepo.cim.keys import validate_key
-from xraymyrepo.persistence import derivation_queries, queries
+from xraymyrepo.persistence import comparison_queries, derivation_queries, queries
+from xraymyrepo.persistence.comparison_queries import ComparisonRecord
 from xraymyrepo.persistence.derivation_queries import RunRecord
 from xraymyrepo.persistence.queries import SnapshotRecord
 
@@ -54,6 +55,22 @@ def complete_run(run_id: Annotated[int, Path(ge=1)], conn: Conn) -> RunRecord:
 
 
 CompleteRun = Annotated[RunRecord, Depends(complete_run)]
+
+
+def complete_comparison(comparison_id: Annotated[int, Path(ge=1)], conn: Conn) -> ComparisonRecord:
+    """The requested snapshot comparison, which must be complete for its changes to be
+    served. Its two snapshots are complete too (comparisons are only created from
+    complete snapshots)."""
+    record = comparison_queries.get_comparison(conn, comparison_id)
+    if record is None:
+        raise not_found("comparison_not_found", f"Comparison {comparison_id} does not exist.")
+    if record.status is not SnapshotStatus.COMPLETE:
+        raise ApiError(409, "comparison_not_complete", "Comparison not complete",
+                       f"Comparison {comparison_id} is {record.status}.")  # fmt: skip
+    return record
+
+
+CompleteComparison = Annotated[ComparisonRecord, Depends(complete_comparison)]
 
 
 def checked_key(key: str, parameter: str) -> str:

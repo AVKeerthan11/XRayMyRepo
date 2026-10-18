@@ -7,9 +7,20 @@ Canonical documentation: docs/cim/CIM-v1.md. Three tiers, each immutable:
 * derivation          ``Derivation``: lenses, groups, rollups, metrics, findings,
                       inferred layers
 * interpretation      ``Annotation``: append-only AI output; never graph facts
+
+Across two snapshots of one repository: ``NodeLineage`` and ``SnapshotComparison``
+(node and edge changes).
 """
 
 from .classification import Classification, applicable_kinds
+from .comparison import (
+    ComparisonRun,
+    ComparisonSummary,
+    EdgeChange,
+    NodeChange,
+    SnapshotComparison,
+    incomparability,
+)
 from .coverage import CoverageDeclaration, ExtractionIssue, UnresolvedReference
 from .derivation import (
     Derivation,
@@ -39,16 +50,19 @@ from .enums import (
     CallKind,
     ClassificationFacet,
     Confidence,
+    EdgeChangeKind,
     EdgeKind,
     EndpointProtocol,
     ExclusionAction,
     ExtractionStatus,
     FindingSeverity,
     FunctionKind,
+    Incomparability,
     InheritanceMode,
     IssueSeverity,
     LensKind,
     MatchMethod,
+    NodeChangeKind,
     NodeKind,
     Origin,
     ReferenceKind,
@@ -111,6 +125,8 @@ __all__ = [
     "CallsAttributes",
     "Classification",
     "ClassificationFacet",
+    "ComparisonRun",
+    "ComparisonSummary",
     "Confidence",
     "ConfigEvidence",
     "ConventionEvidence",
@@ -120,6 +136,8 @@ __all__ = [
     "DerivedEvidence",
     "DirectoryAttributes",
     "Edge",
+    "EdgeChange",
+    "EdgeChangeKind",
     "EdgeKind",
     "EdgeRef",
     "EndpointAttributes",
@@ -139,6 +157,7 @@ __all__ = [
     "GroupMember",
     "HandlesAttributes",
     "ImportsAttributes",
+    "Incomparability",
     "InferredLayer",
     "InheritanceMode",
     "InheritsAttributes",
@@ -148,6 +167,8 @@ __all__ = [
     "LensKind",
     "MatchMethod",
     "Node",
+    "NodeChange",
+    "NodeChangeKind",
     "NodeKind",
     "NodeLineage",
     "NodeMetric",
@@ -166,6 +187,7 @@ __all__ = [
     "Segment",
     "SignatureShape",
     "Snapshot",
+    "SnapshotComparison",
     "SnapshotDocument",
     "SnapshotIdentity",
     "SnapshotStatus",
@@ -184,6 +206,7 @@ __all__ = [
     "endpoint_scope",
     "external_package_key",
     "group_key",
+    "incomparability",
     "package_key",
     "parse_endpoint_key",
     "path_key",

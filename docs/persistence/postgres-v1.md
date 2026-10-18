@@ -1,9 +1,11 @@
-# Persistence v1: PostgreSQL snapshot and derivation store
+# Persistence v1: PostgreSQL snapshot, derivation and comparison store
 
-PostgreSQL is the system of record for completed CIM snapshots and for the derivations computed from them.
+PostgreSQL is the system of record for completed CIM snapshots, the derivations computed from them and the
+comparisons between them.
 `xraymyrepo.persistence` stores a validated `SnapshotDocument` (snapshot tier, migrations 0001–0002) or
 `Derivation` (derivation tier, migration 0003) and loads it back. It does not change the CIM: no new kinds or
-fields. It uses psycopg 3 and plain parameterized SQL, with no ORM. Derivations: see "Derivations" below.
+fields. It uses psycopg 3 and plain parameterized SQL, with no ORM. Derivations and comparisons: see their
+sections below.
 
 ```text
 repository → analyze() → SnapshotDocument → persist_snapshot() → PostgreSQL → load_snapshot() → SnapshotDocument
@@ -188,6 +190,54 @@ number of indexed statements, and pages by keyset:
 
 Row-to-record mapping (`_derivation_rows.py`) is shared with `load_derivation`.
 
+## Comparisons (migration 0004)
+
+A `SnapshotComparison` (CIM §8) is computed from two complete snapshots of one repository by
+`xraymyrepo.insights.comparison` (docs/comparison/comparison-v1.md). Persistence stores and reads it without
+knowing how it was computed, and never imports `insights`.
+
+| Function | Does |
+| --- | --- |
+| `persist_comparison(conn, from_snapshot_id, to_snapshot_id, comparison, params) -> int` | Stores the comparison as **complete** in one transaction; returns its id. |
+| `load_comparison(conn, comparison_id) -> SnapshotComparison` | Loads a complete comparison, validated, in canonical order (five queries). |
+| `load_comparison_summary(conn, comparison_id) -> ComparisonSummary` | The counts by change kind, without loading the rows. |
+| `find_comparison(conn, from_snapshot_id, to_snapshot_id, algorithm, algorithm_version, params_hash) -> StoredRun \| None` | Looks a comparison up by identity, any status. |
+
+Errors: `ComparisonExistsError` (carries `comparison_id` and `status`), `ComparisonNotFoundError`,
+`ComparisonNotCompleteError`, and the snapshot errors above.
+
+* **Identity.** `(from, to, algorithm, algorithm_version, params_hash)`, unique in `snapshot_comparison`. It
+  is directed: `to → from` is another comparison. A second persist of the same identity, in any status, raises
+  `ComparisonExistsError` and changes nothing.
+* **Checked before the rows are written.** The comparison's status is `complete`. `params` hashes to its
+  `params_hash`. Both snapshots exist, are complete and are the ones the run names. Every key and edge it cites
+  exists in its snapshot. Each failure is a `PersistenceError`, and nothing is left behind.
+* **Lifecycle.** `INSERT snapshot_comparison` as `pending` (with `params` and `incomparable`), one `COPY` each
+  for `node_change` and `edge_change`, then `pending → complete` with the summary, all in one transaction.
+  Completing runs `snapshot_comparison_check_complete`. Every node of both snapshots must be a row, rows must
+  match their nodes and edges, the summary must count the rows, and rows plus `edges.unchanged` must account
+  for every edge. A violation (SQLSTATE `23000`) rolls everything back.
+* **Rows.** Rows store node and edge ids, which loading resolves back to keys and `EdgeRef`s by joins:
+  * **Nodes.** Every node is a row, unchanged included.
+  * **Edges.** Only changed and `undetermined` edges are rows. Unchanged edges are the summary's
+    `edges.unchanged`, which becomes `unchanged_edges` on load.
+  * **Undetermined rows.** These keep their one or two sides as stored.
+  * **Incomparable reasons.** They are stored in enum order and re-checked against the two identities, both
+    on insert (trigger) and on load (model).
+* **Round trip.** `load_comparison(conn, persist_comparison(conn, a, b, c, params)) == c.canonical()`. Loading
+  also checks that the stored summary equals the rows' summary.
+* **Database guarantees.** `snapshot_comparison_guard_immutable` and `comparison_child_guard_immutable`: a
+  finished comparison and its rows never change. Deleting either snapshot deletes its comparisons; the node and
+  edge references are deferred, as for derivations.
+
+### Comparison read queries (`xraymyrepo.persistence.comparison_queries`)
+
+For the API: `get_comparison`, `list_comparisons` (the snapshot on either side, newest first),
+`comparison_params`, `comparison_summary`, and keyset-paged `list_node_changes` (key order) and
+`list_edge_changes` (canonical order, which is the storage order), both optionally filtered by change kind and
+node or edge kind. They return CIM `NodeChange` / `EdgeChange` records resolved to keys by joins. Row-to-record
+mapping (`_comparison_rows.py`) is shared with `load_comparison`.
+
 ## Decisions (2026-10-08)
 
 1. **One transaction.** Pending, loading and complete all happen in one transaction; nothing is left behind
@@ -233,3 +283,5 @@ ruff check . && ruff format --check . && mypy --strict
   `db/migrations/*.sql` in order). There is no migration runner.
 * **Derivations load whole.** `load_derivation` materializes the whole run; the API uses
   `derivation_queries` instead. Runs cannot be deleted on their own, only with their snapshot.
+* **Comparisons load whole** too. The API uses `comparison_queries` instead. Comparisons are deleted only
+  with either snapshot.

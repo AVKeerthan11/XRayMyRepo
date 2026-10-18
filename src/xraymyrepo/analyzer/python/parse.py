@@ -55,13 +55,13 @@ def parse_python_file(file: FileFact, module_name: str | None) -> ParsedPythonFi
         )
 
     imports: tuple[ImportFact, ...] = ()
-    issues: tuple[IssueFact, ...] = ()
+    issues: tuple[IssueFact, ...] = symbols.issues  # fingerprint warnings: still ``full``
     status = ExtractionStatus.FULL
     try:
         imports = extract_imports(file.key, tree, source, symbols)
     except Exception as exc:
         status = ExtractionStatus.PARTIAL
-        issues = (
+        issues += (
             IssueFact(
                 PYTHON_PRODUCER,
                 "py.import",

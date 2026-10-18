@@ -188,6 +188,8 @@ def _symbols(facts: RepositoryFacts) -> list[Node]:
                     language="python",
                     span=_span(symbol.span),
                     provenance=Provenance(producer=PYTHON_PRODUCER, rule=symbol.rule),
+                    content_hash=symbol.content_hash,
+                    signature_hash=symbol.signature_hash,
                     attributes=attributes,
                 )
             )

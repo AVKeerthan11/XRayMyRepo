@@ -214,6 +214,34 @@ class MatchMethod(StrEnum):
     SAME_CONTENT_HASH = "same_content_hash"
 
 
+class NodeChangeKind(StrEnum):
+    """What happened to a node between two snapshots (see ``comparison.py``)."""
+
+    ADDED = "added"
+    REMOVED = "removed"
+    MODIFIED = "modified"
+    MOVED = "moved"
+    UNCHANGED = "unchanged"
+    UNDETERMINED = "undetermined"  # the snapshots cannot tell; never a guess
+
+
+class EdgeChangeKind(StrEnum):
+    """What happened to an edge, compared after node matching."""
+
+    ADDED = "added"
+    REMOVED = "removed"
+    MODIFIED = "modified"
+    UNCHANGED = "unchanged"
+    UNDETERMINED = "undetermined"  # the other snapshot could not show it; never a guess
+
+
+class Incomparability(StrEnum):
+    """Why two snapshots of one repository are not fully comparable."""
+
+    EXTRACTOR_VERSION_DIFFERS = "extractor_version_differs"
+    CONFIG_DIFFERS = "config_differs"
+
+
 class AnnotationKind(StrEnum):
     LABEL = "label"
     SUMMARY = "summary"

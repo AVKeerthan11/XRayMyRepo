@@ -9,7 +9,7 @@ from functools import cached_property
 from xraymyrepo.cim import AnalysisConfig, ExclusionAction, Origin
 from xraymyrepo.cim.snapshot import DEFAULT_EXCLUSION_POLICY
 
-ANALYZER_VERSION = "0.1.0"
+ANALYZER_VERSION = "0.2.0"
 """Version of every producer in this package and the snapshot's extractor version."""
 
 ANALYZER_LANGUAGES: tuple[str, ...] = ("python", "toml")

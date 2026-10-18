@@ -10,18 +10,24 @@ of one name are numbered in source order (``f``, ``f@2``), except:
 * ``@<prop>.setter`` / ``.getter`` / ``.deleter`` are the same node as the property.
 
 Variables, fields, decorators and lambdas are not nodes. Spans include decorators.
+
+Every declaration is fingerprinted (``fingerprint.py``); a merged node is
+fingerprinted over all its parts. A declaration that cannot be fingerprinted keeps
+its node without fingerprints and gets a ``fingerprint_error`` warning; the file's
+extraction status is not affected.
 """
 
 from __future__ import annotations
 
 import ast
 from collections import Counter
-from collections.abc import Iterator
-from dataclasses import dataclass
+from collections.abc import Callable, Iterator
+from dataclasses import dataclass, replace
 
-from xraymyrepo.cim import FunctionKind, NodeKind, Segment, TypeKind
+from xraymyrepo.cim import FunctionKind, IssueSeverity, NodeKind, Segment, TypeKind
 
-from ..facts import Span, SymbolFact
+from ..facts import PYTHON_PRODUCER, IssueFact, Span, SymbolFact
+from .fingerprint import Fingerprinter, FingerprintError, fingerprint_signature
 from .source import SourceText
 
 Declaration = ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef | ast.TypeAlias
@@ -34,26 +40,33 @@ class SymbolTable:
     symbols: tuple[SymbolFact, ...]
     scope_keys: dict[int, str]
     """``id()`` of every class/function AST node -> key of the node it belongs to."""
+    issues: tuple[IssueFact, ...] = ()
+    """``fingerprint_error`` warnings."""
 
 
 def extract_symbols(file_key: str, tree: ast.Module, source: SourceText) -> SymbolTable:
     extractor = _Extractor(file_key, source)
     extractor.scope(tree.body, file_key, (), in_class=False)
-    return SymbolTable(tuple(extractor.symbols), extractor.scope_keys)
+    return SymbolTable(tuple(extractor.symbols), extractor.scope_keys, tuple(extractor.issues))
 
 
 class _Extractor:
     def __init__(self, file_key: str, source: SourceText) -> None:
         self.file_key = file_key
         self.source = source
+        self.fingerprinter = Fingerprinter(source)
         self.symbols: list[SymbolFact] = []
         self.scope_keys: dict[int, str] = {}
+        self.issues: list[IssueFact] = []
 
     def scope(
         self, body: list[ast.stmt], parent_key: str, prefix: tuple[Segment, ...], *, in_class: bool
     ) -> None:
         declarations = list(_declarations(body))
         merged = _merged_into(declarations)
+        parts: dict[int, list[Declaration]] = {}
+        for node in declarations:
+            parts.setdefault(merged.get(id(node), id(node)), []).append(node)
         counts: Counter[str] = Counter()
         for node in declarations:
             if id(node) in merged:
@@ -63,7 +76,8 @@ class _Extractor:
             segments = (*prefix, Segment(name, ordinal=counts[name] if counts[name] > 1 else None))
             key = f"{self.file_key}#{'.'.join(str(s) for s in segments)}"
             self.scope_keys[id(node)] = key
-            self.symbols.append(self._fact(node, key, parent_key, in_class=in_class))
+            fact = self._fact(node, key, parent_key, in_class=in_class)
+            self.symbols.append(self._fingerprinted(fact, node, parts[id(node)]))
             if not isinstance(node, ast.TypeAlias):
                 self.scope(node.body, key, segments, in_class=isinstance(node, ast.ClassDef))
         # A merged stub or accessor is the surviving node. Its body is not walked for
@@ -114,6 +128,41 @@ class _Extractor:
             function_kind=kind,
             is_async=isinstance(node, ast.AsyncFunctionDef),
         )
+
+    def _fingerprinted(
+        self, fact: SymbolFact, node: Declaration, parts: list[Declaration]
+    ) -> SymbolFact:
+        """``fact`` with its fingerprints, each computed independently; a failed one is
+        left empty, with a warning. Any exception is caught: fingerprints must never
+        cost a file its declarations."""
+        spans = [self._span(part) for part in parts]
+        return replace(
+            fact,
+            content_hash=self._attempt(
+                "content_hash", fact, lambda: self.fingerprinter.content_hash(fact.name, spans)
+            ),
+            signature_hash=self._attempt(
+                "signature_hash", fact, lambda: fingerprint_signature(node, fact.function_kind)
+            ),
+        )
+
+    def _attempt(self, what: str, fact: SymbolFact, compute: Callable[[], str]) -> str | None:
+        try:
+            return compute()
+        except Exception as exc:
+            reason = exc if isinstance(exc, FingerprintError) else f"{type(exc).__name__}: {exc}"
+            self.issues.append(
+                IssueFact(
+                    PYTHON_PRODUCER,
+                    "py.fingerprint",
+                    IssueSeverity.WARNING,
+                    "fingerprint_error",
+                    f"no {what} for {fact.key}: {reason}",
+                    self.file_key,
+                    fact.span,
+                )
+            )
+            return None
 
     def _span(self, node: Declaration) -> Span:
         assert node.end_lineno is not None and node.end_col_offset is not None

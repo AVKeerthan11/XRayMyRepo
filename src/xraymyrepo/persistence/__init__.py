@@ -1,11 +1,20 @@
-"""PostgreSQL persistence: the system of record for completed CIM snapshots and the
-derivations computed from them.
+"""PostgreSQL persistence: the system of record for completed CIM snapshots, the
+derivations computed from them and the comparisons between them.
 
 Requires ``psycopg`` (``pip install -e .[postgres]``) and a database migrated with
 ``db/migrations``. See docs/persistence/postgres-v1.md for the lifecycle,
 immutability rules and the round-trip invariant.
 """
 
+from .comparisons import (
+    ComparisonExistsError,
+    ComparisonNotCompleteError,
+    ComparisonNotFoundError,
+    find_comparison,
+    load_comparison,
+    load_comparison_summary,
+    persist_comparison,
+)
 from .derivations import (
     DerivationRunExistsError,
     DerivationRunNotCompleteError,
@@ -28,6 +37,9 @@ from .snapshots import (
 )
 
 __all__ = [
+    "ComparisonExistsError",
+    "ComparisonNotCompleteError",
+    "ComparisonNotFoundError",
     "DerivationRunExistsError",
     "DerivationRunNotCompleteError",
     "DerivationRunNotFoundError",
@@ -38,10 +50,14 @@ __all__ = [
     "SnapshotNotFoundError",
     "StoredRun",
     "StoredSnapshot",
+    "find_comparison",
     "find_derivation_run",
     "find_snapshot",
+    "load_comparison",
+    "load_comparison_summary",
     "load_derivation",
     "load_snapshot",
+    "persist_comparison",
     "persist_derivation",
     "persist_snapshot",
 ]

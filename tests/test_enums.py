@@ -6,10 +6,13 @@ from xraymyrepo.cim import (
     Basis,
     ClassificationFacet,
     Confidence,
+    EdgeChangeKind,
     EdgeKind,
     EndpointProtocol,
     FunctionKind,
+    Incomparability,
     MatchMethod,
+    NodeChangeKind,
     NodeKind,
     Origin,
     Role,
@@ -103,3 +106,11 @@ def test_lifecycle_and_matching_vocabularies() -> None:
     assert values(SnapshotStatus) == {"pending", "complete", "failed"}
     assert values(UnresolvedReason) == {"not_found", "dynamic", "ambiguous", "unsupported_language"}
     assert values(MatchMethod) == {"same_key", "git_rename", "same_content_hash"}
+
+
+def test_comparison_vocabularies_are_closed() -> None:
+    assert values(NodeChangeKind) == {
+        "added", "removed", "modified", "moved", "unchanged", "undetermined",
+    }  # fmt: skip
+    assert values(EdgeChangeKind) == {"added", "removed", "modified", "unchanged", "undetermined"}
+    assert values(Incomparability) == {"extractor_version_differs", "config_differs"}

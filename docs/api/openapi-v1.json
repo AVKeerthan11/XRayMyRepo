@@ -119,6 +119,38 @@
         "title": "CallsAttributes",
         "type": "object"
       },
+      "ChangeCounts": {
+        "additionalProperties": false,
+        "description": "Changes by kind; every kind is present, zeros included.",
+        "properties": {
+          "edges": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/EdgeChangeKind"
+            },
+            "title": "Edges",
+            "type": "object"
+          },
+          "nodes": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/NodeChangeKind"
+            },
+            "title": "Nodes",
+            "type": "object"
+          }
+        },
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "title": "ChangeCounts",
+        "type": "object"
+      },
       "ClassificationDetail": {
         "additionalProperties": false,
         "properties": {
@@ -188,6 +220,190 @@
         ],
         "title": "ClassificationFacet",
         "type": "string"
+      },
+      "ComparisonDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "title": "Algorithm",
+            "type": "string"
+          },
+          "algorithm_version": {
+            "title": "Algorithm Version",
+            "type": "string"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ChangeCounts"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "from_snapshot": {
+            "$ref": "#/components/schemas/SnapshotSummary"
+          },
+          "from_snapshot_id": {
+            "title": "From Snapshot Id",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "incomparable": {
+            "description": "How the two snapshot identities differ; empty when fully comparable. When not empty, no change has high confidence.",
+            "items": {
+              "$ref": "#/components/schemas/Incomparability"
+            },
+            "title": "Incomparable",
+            "type": "array"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "params_hash": {
+            "title": "Params Hash",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SnapshotStatus"
+          },
+          "to_snapshot": {
+            "$ref": "#/components/schemas/SnapshotSummary"
+          },
+          "to_snapshot_id": {
+            "title": "To Snapshot Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "from_snapshot_id",
+          "to_snapshot_id",
+          "algorithm",
+          "algorithm_version",
+          "params_hash",
+          "incomparable",
+          "status",
+          "failure_reason",
+          "created_at",
+          "finished_at",
+          "from_snapshot",
+          "to_snapshot",
+          "params",
+          "counts"
+        ],
+        "title": "ComparisonDetail",
+        "type": "object"
+      },
+      "ComparisonRunSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "title": "Algorithm",
+            "type": "string"
+          },
+          "algorithm_version": {
+            "title": "Algorithm Version",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "from_snapshot_id": {
+            "title": "From Snapshot Id",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "incomparable": {
+            "description": "How the two snapshot identities differ; empty when fully comparable. When not empty, no change has high confidence.",
+            "items": {
+              "$ref": "#/components/schemas/Incomparability"
+            },
+            "title": "Incomparable",
+            "type": "array"
+          },
+          "params_hash": {
+            "title": "Params Hash",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SnapshotStatus"
+          },
+          "to_snapshot_id": {
+            "title": "To Snapshot Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "from_snapshot_id",
+          "to_snapshot_id",
+          "algorithm",
+          "algorithm_version",
+          "params_hash",
+          "incomparable",
+          "status",
+          "failure_reason",
+          "created_at",
+          "finished_at"
+        ],
+        "title": "ComparisonRunSummary",
+        "type": "object"
       },
       "Confidence": {
         "enum": [
@@ -547,6 +763,68 @@
         "additionalProperties": false,
         "properties": {},
         "title": "DirectoryAttributes",
+        "type": "object"
+      },
+      "EdgeChangeKind": {
+        "description": "What happened to an edge, compared after node matching.",
+        "enum": [
+          "added",
+          "removed",
+          "modified",
+          "unchanged",
+          "undetermined"
+        ],
+        "title": "EdgeChangeKind",
+        "type": "string"
+      },
+      "EdgeChangeView": {
+        "additionalProperties": false,
+        "properties": {
+          "change": {
+            "enum": [
+              "added",
+              "removed",
+              "modified",
+              "undetermined"
+            ],
+            "title": "ListedEdgeChangeKind",
+            "type": "string"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "from_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EdgeRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EdgeKind"
+          },
+          "to_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EdgeRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "change",
+          "kind",
+          "from_ref",
+          "to_ref",
+          "confidence"
+        ],
+        "title": "EdgeChangeView",
         "type": "object"
       },
       "EdgeCount": {
@@ -1599,6 +1877,15 @@
         "title": "ImportsAttributes",
         "type": "object"
       },
+      "Incomparability": {
+        "description": "Why two snapshots of one repository are not fully comparable.",
+        "enum": [
+          "extractor_version_differs",
+          "config_differs"
+        ],
+        "title": "Incomparability",
+        "type": "string"
+      },
       "InheritanceMode": {
         "enum": [
           "extends",
@@ -1783,6 +2070,16 @@
         "title": "LensSummary",
         "type": "object"
       },
+      "MatchMethod": {
+        "description": "How a node in one snapshot was matched to a node in another.",
+        "enum": [
+          "same_key",
+          "git_rename",
+          "same_content_hash"
+        ],
+        "title": "MatchMethod",
+        "type": "string"
+      },
       "MetricView": {
         "additionalProperties": false,
         "properties": {
@@ -1844,6 +2141,96 @@
           "name"
         ],
         "title": "NodeBrief",
+        "type": "object"
+      },
+      "NodeChangeKind": {
+        "description": "What happened to a node between two snapshots (see ``comparison.py``).",
+        "enum": [
+          "added",
+          "removed",
+          "modified",
+          "moved",
+          "unchanged",
+          "undetermined"
+        ],
+        "title": "NodeChangeKind",
+        "type": "string"
+      },
+      "NodeChangeView": {
+        "additionalProperties": false,
+        "properties": {
+          "change": {
+            "$ref": "#/components/schemas/NodeChangeKind"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "from_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Key"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "repository",
+              "directory",
+              "file",
+              "type",
+              "function",
+              "endpoint",
+              "package",
+              "external_package"
+            ],
+            "title": "SnapshotNodeKind",
+            "type": "string"
+          },
+          "match_method": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MatchMethod"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "move_ambiguous": {
+            "title": "Move Ambiguous",
+            "type": "boolean"
+          },
+          "to_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Key"
+          }
+        },
+        "required": [
+          "key",
+          "change",
+          "kind",
+          "from_key",
+          "to_key",
+          "match_method",
+          "confidence",
+          "move_ambiguous"
+        ],
+        "title": "NodeChangeView",
         "type": "object"
       },
       "NodeDetail": {
@@ -2266,6 +2653,36 @@
         "title": "Page[BlindSpotView]",
         "type": "object"
       },
+      "Page_ComparisonRunSummary_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonRunSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[ComparisonRunSummary]",
+        "type": "object"
+      },
       "Page_DerivationRunSummary_": {
         "additionalProperties": false,
         "properties": {
@@ -2294,6 +2711,36 @@
           "next_cursor"
         ],
         "title": "Page[DerivationRunSummary]",
+        "type": "object"
+      },
+      "Page_EdgeChangeView_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EdgeChangeView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[EdgeChangeView]",
         "type": "object"
       },
       "Page_FindingView_": {
@@ -2474,6 +2921,36 @@
           "next_cursor"
         ],
         "title": "Page[NodeBrief]",
+        "type": "object"
+      },
+      "Page_NodeChangeView_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NodeChangeView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[NodeChangeView]",
         "type": "object"
       },
       "Page_NodeSummary_": {
@@ -3501,6 +3978,576 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/comparisons/{comparison_id}": {
+      "get": {
+        "operationId": "get_comparison_api_v1_comparisons__comparison_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparison_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Comparison Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Comparison not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "A comparison: both snapshots, parameters, comparability and change counts",
+        "tags": [
+          "comparison"
+        ]
+      }
+    },
+    "/api/v1/comparisons/{comparison_id}/edge-changes": {
+      "get": {
+        "description": "Ordered by edge kind, source key and target key (of the edge in ``to``, else in\n``from``).",
+        "operationId": "list_edge_changes_api_v1_comparisons__comparison_id__edge_changes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparison_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Comparison Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Repeatable filter; not `unchanged`",
+            "in": "query",
+            "name": "change",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "added",
+                      "removed",
+                      "modified",
+                      "undetermined"
+                    ],
+                    "title": "ListedEdgeChangeKind",
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repeatable filter; not `unchanged`",
+              "title": "Change"
+            }
+          },
+          {
+            "description": "Repeatable",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/EdgeKind"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repeatable",
+              "title": "Kind"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_EdgeChangeView_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Comparison not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Changed and undetermined edges in canonical order, optionally by change and kind",
+        "tags": [
+          "comparison"
+        ]
+      }
+    },
+    "/api/v1/comparisons/{comparison_id}/node-changes": {
+      "get": {
+        "description": "Every node of both snapshots has exactly one change, ``unchanged`` included.",
+        "operationId": "list_node_changes_api_v1_comparisons__comparison_id__node_changes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparison_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Comparison Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Repeatable filter",
+            "in": "query",
+            "name": "change",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/NodeChangeKind"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repeatable filter",
+              "title": "Change"
+            }
+          },
+          {
+            "description": "Repeatable filter",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "repository",
+                      "directory",
+                      "file",
+                      "type",
+                      "function",
+                      "endpoint",
+                      "package",
+                      "external_package"
+                    ],
+                    "title": "SnapshotNodeKind",
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repeatable filter",
+              "title": "Kind"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_NodeChangeView_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Comparison not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Node changes in key order, optionally by change and node kind",
+        "tags": [
+          "comparison"
+        ]
+      }
+    },
+    "/api/v1/comparisons/{comparison_id}/summary": {
+      "get": {
+        "operationId": "get_summary_api_v1_comparisons__comparison_id__summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparison_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Comparison Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeCounts"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Comparison not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Change counts by kind, unchanged edges included",
+        "tags": [
+          "comparison"
+        ]
+      }
+    },
     "/api/v1/derivations/{run_id}": {
       "get": {
         "operationId": "get_run_api_v1_derivations__run_id__get",
@@ -5624,6 +6671,147 @@
         "summary": "Snapshot metadata, configuration, root node and statistics",
         "tags": [
           "repositories and snapshots"
+        ]
+      }
+    },
+    "/api/v1/snapshots/{snapshot_id}/comparisons": {
+      "get": {
+        "description": "Any status; a comparison is listed under both of its snapshots.",
+        "operationId": "list_comparisons_api_v1_snapshots__snapshot_id__comparisons_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Snapshot Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ComparisonRunSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Snapshot not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Comparisons with the snapshot on either side, newest first",
+        "tags": [
+          "comparison"
         ]
       }
     },

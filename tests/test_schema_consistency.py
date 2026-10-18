@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import itertools
+import json
 import re
 
 import pytest
@@ -10,11 +12,15 @@ from xraymyrepo.cim import (
     EDGE_RULES,
     ClassificationFacet,
     Confidence,
+    EdgeChangeKind,
     EdgeKind,
     ExtractionStatus,
     FindingSeverity,
+    Incomparability,
     IssueSeverity,
     LensKind,
+    MatchMethod,
+    NodeChangeKind,
     Origin,
     ReferenceKind,
     Role,
@@ -27,6 +33,7 @@ from .conftest import MIGRATIONS
 
 SQL = (MIGRATIONS / "0001_cim_v1_snapshot_tier.sql").read_text(encoding="utf-8")
 DERIVATION_SQL = (MIGRATIONS / "0003_derivation_tier.sql").read_text(encoding="utf-8")
+COMPARISON_SQL = (MIGRATIONS / "0004_snapshot_comparison.sql").read_text(encoding="utf-8")
 
 
 def check_values(constraint: str, sql: str = SQL) -> set[str]:
@@ -111,6 +118,64 @@ def test_evidence_is_not_gin_indexed() -> None:
 )  # fmt: skip
 def test_derivation_check_constraint_matches_enum(constraint: str, expected: set[str]) -> None:
     assert check_values(constraint, DERIVATION_SQL) == expected
+
+
+@pytest.mark.parametrize(
+    ("constraint", "expected"),
+    [
+        ("snapshot_comparison_status_check", values(SnapshotStatus)),
+        ("node_change_change_check", values(NodeChangeKind)),
+        ("node_change_kind_check", {k.value for k in SNAPSHOT_NODE_KINDS}),
+        ("node_change_match_method_check", values(MatchMethod)),
+        ("node_change_confidence_check", values(Confidence)),
+        # unchanged edges are counted in the summary, never rows
+        ("edge_change_change_check", values(EdgeChangeKind) - {EdgeChangeKind.UNCHANGED.value}),
+        ("edge_change_kind_check", values(EdgeKind)),
+        ("edge_change_confidence_check", values(Confidence)),
+    ],
+)
+def test_comparison_check_constraint_matches_enum(constraint: str, expected: set[str]) -> None:
+    assert check_values(constraint, COMPARISON_SQL) == expected
+
+
+def test_comparison_incomparable_is_every_ordered_subset_of_the_reasons() -> None:
+    body = re.search(r"CONSTRAINT snapshot_comparison_incomparable_check CHECK (.*?)\),\n",
+                     COMPARISON_SQL, re.S)  # fmt: skip
+    assert body
+    allowed = {tuple(json.loads(v)) for v in re.findall(r"'(\[[^']*\])'", body.group(1))}
+    reasons = [r.value for r in Incomparability]
+    expected = {tuple(r for r in reasons if r in subset)
+                for n in range(len(reasons) + 1)
+                for subset in itertools.combinations(reasons, n)}  # fmt: skip
+    assert allowed == expected
+
+
+def test_comparison_summary_lists_every_change_kind() -> None:
+    body = re.search(r"FUNCTION snapshot_comparison_summary_valid\(.*?\$\$(.*?)\$\$;",
+                     COMPARISON_SQL, re.S)  # fmt: skip
+    assert body
+    assert "summary IS NULL OR snapshot_comparison_summary_valid(summary)" in COMPARISON_SQL
+    arrays = re.findall(r"summary -> '(nodes|edges)' \?& ARRAY\[([^\]]*)\]", body.group(1))
+    keys = {side: set(re.findall(r"'([^']+)'", items)) for side, items in arrays}
+    assert keys == {"nodes": values(NodeChangeKind), "edges": values(EdgeChangeKind)}
+    removed = re.findall(r"\(summary -> '(nodes|edges)'\) - ARRAY\[([^\]]*)\]", body.group(1))
+    assert {side: set(re.findall(r"'([^']+)'", items)) for side, items in removed} == keys
+
+
+def test_comparison_tier_shape() -> None:
+    assert "CREATE TYPE" not in COMPARISON_SQL.upper() and "USING gin" not in COMPARISON_SQL
+    for table in ("node_change", "edge_change"):
+        body = re.search(rf"CREATE TABLE {table} \((.*?)\n\);", COMPARISON_SQL, re.S)
+        assert body, table
+        assert re.search(r"PRIMARY KEY \(comparison_id,", body.group(1)), table
+        # Snapshot rows are referenced through the comparison's own snapshots, deferred.
+        reference = (
+            r"FOREIGN KEY \((\w+), (\w+)\)\s+REFERENCES (node|edge) \(snapshot_id, id\)"
+            r" DEFERRABLE INITIALLY DEFERRED"
+        )
+        refs = re.findall(reference, body.group(1))
+        assert {r[0] for r in refs} == {"from_snapshot_id", "to_snapshot_id"}, table
+        assert "ON DELETE CASCADE" in body.group(1), table
 
 
 def test_derivation_tier_shape() -> None:

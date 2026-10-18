@@ -20,13 +20,21 @@ from xraymyrepo.cim import (
     DerivedEvidence,
     EdgeKind,
     ExtractionStatus,
+    FunctionKind,
     ImportsAttributes,
     NodeKind,
     Origin,
+    ParameterShape,
+    SignatureShape,
     SnapshotDocument,
     SpanEvidence,
+    TypeKind,
+    TypeShape,
     UnresolvedReason,
+    content_hash,
+    signature_hash,
 )
+from xraymyrepo.cim.fingerprint import ParameterKind
 from xraymyrepo.cim.keys import decode_path
 
 from .conftest import GOLDEN_REPO
@@ -361,3 +369,72 @@ def test_snapshot_tier_holds_no_inferred_or_ai_claims(golden: SnapshotDocument) 
     bases = {n.basis for n in golden.nodes} | {e.basis for e in golden.edges}
     bases |= {c.basis for c in golden.classifications}
     assert bases <= {Basis.OBSERVED, Basis.RESOLVED, Basis.HEURISTIC}
+
+
+# ---------------------------------------------------------------------------
+# Fingerprints: Python symbols carry both; the values are checked here against
+# token streams and shapes written out by hand (docs/analyzer/python-v1.md rules),
+# independently of the analyzer that produced them.
+
+
+def test_python_symbols_are_fingerprinted(golden: SnapshotDocument) -> None:
+    for node in golden.nodes:
+        if node.kind in (NodeKind.TYPE, NodeKind.FUNCTION):
+            fingerprinted = node.content_hash is not None and node.signature_hash is not None
+            assert fingerprinted == (node.language == "python"), node.key
+
+
+@pytest.mark.parametrize(
+    ("key", "tokens"),
+    [
+        (
+            f"{PY}/users/service.py#UserService.get",
+            ["def", "<NAME>", "(", "self", ",", "user_id", ":", "int", ")", "->", "User", "|",
+             "None", ":", "<NL>", "<IN>", "return", "self", ".", "session", ".", "get", "(",
+             "User", ",", "user_id", ")"],
+        ),
+        (
+            f"{PY}/plugins.py#load_plugin",
+            ["def", "<NAME>", "(", "name", ":", "str", ")", ":", "<NL>", "<IN>", "return",
+             "importlib", ".", "import_module", "(", "name", ")"],
+        ),
+        (f"{PY}/db.py#Base", ["class", "<NAME>", "(", "DeclarativeBase", ")", ":", "<NL>",
+                              "<IN>", "pass"]),
+    ],
+)  # fmt: skip
+def test_content_hash_is_the_normalized_token_stream(
+    golden: SnapshotDocument, key: str, tokens: list[str]
+) -> None:
+    assert golden.node(key).content_hash == content_hash(tokens)
+
+
+@pytest.mark.parametrize(
+    ("key", "shape"),
+    [
+        (
+            f"{PY}/users/service.py#UserService.get",
+            SignatureShape(
+                function_kind=FunctionKind.METHOD,
+                parameters=(
+                    ParameterShape(name="self", kind=ParameterKind.POSITIONAL),
+                    ParameterShape(name="user_id", kind=ParameterKind.POSITIONAL,
+                                   annotation="int"),
+                ),
+                returns="User | None",
+            ),
+        ),
+        (
+            f"{PY}/plugins.py#load_plugin",
+            SignatureShape(
+                function_kind=FunctionKind.FUNCTION,
+                parameters=(ParameterShape(name="name", kind=ParameterKind.POSITIONAL,
+                                           annotation="str"),),
+            ),
+        ),
+        (f"{PY}/db.py#Base", TypeShape(type_kind=TypeKind.CLASS, bases=("DeclarativeBase",))),
+    ],
+)  # fmt: skip
+def test_signature_hash_is_the_shape(
+    golden: SnapshotDocument, key: str, shape: SignatureShape | TypeShape
+) -> None:
+    assert golden.node(key).signature_hash == signature_hash(shape)

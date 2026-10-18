@@ -17,6 +17,13 @@ from .architecture import (
 )
 from .catalog import Repository, SnapshotDetail, SnapshotStats, SnapshotSummary
 from .common import ApiModel, NodeBrief, Page, Problem
+from .comparison import (
+    ChangeCounts,
+    ComparisonDetail,
+    ComparisonRunSummary,
+    EdgeChangeView,
+    NodeChangeView,
+)
 from .nodes import (
     ClassificationDetail,
     DiagnosticCounts,
@@ -32,11 +39,15 @@ from .service import Health, Readiness
 
 __all__ = [
     "ApiModel",
+    "ChangeCounts",
     "ClassificationDetail",
+    "ComparisonDetail",
+    "ComparisonRunSummary",
     "DerivationRunDetail",
     "DerivationRunSummary",
     "DiagnosticCounts",
     "Diagnostics",
+    "EdgeChangeView",
     "EdgeCount",
     "EdgeDetail",
     "FindingView",
@@ -51,6 +62,7 @@ __all__ = [
     "LensSummary",
     "MetricView",
     "NodeBrief",
+    "NodeChangeView",
     "NodeDetail",
     "NodeLayer",
     "NodeSummary",

@@ -2,8 +2,8 @@
 persistence.
 
 ``architecture`` and ``insights`` are pure (CIM in, CIM out) and ``persistence``
-knows nothing about how derivations are computed; this module wires them for callers.
-No CLI in this milestone.
+knows nothing about how derivations or comparisons are computed; this module wires
+them for callers. No CLI in this milestone.
 """
 
 from __future__ import annotations
@@ -11,19 +11,33 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from xraymyrepo.cim import Derivation, SnapshotDocument
+from xraymyrepo.cim import Derivation, SnapshotDocument, SnapshotStatus
 
 from . import architecture
 from .architecture import ArchitectureParams, derive
+from .insights import comparison as comparison_algorithm
 from .insights import health as health_algorithm
+from .insights.comparison import ComparisonParams, compare
 from .insights.health import HealthParams, health
 from .persistence import (
+    ComparisonExistsError,
     DerivationRunExistsError,
+    SnapshotNotCompleteError,
+    SnapshotNotFoundError,
+    find_comparison,
     find_derivation_run,
     load_snapshot,
+    persist_comparison,
     persist_derivation,
+    queries,
 )
 from .persistence.snapshots import Connection
+
+
+class SnapshotsNotComparableError(ValueError):
+    """Two stored snapshots that cannot be compared at all: the same snapshot, or
+    snapshots of different repositories. (Snapshots that differ in extractor version or
+    configuration *are* compared, as not fully comparable.)"""
 
 
 def _derive_and_store(
@@ -70,3 +84,52 @@ def derive_health(conn: Connection, snapshot_id: int, params: HealthParams | Non
     return _derive_and_store(
         conn, snapshot_id, identity, params.as_json(), lambda doc: health(doc, params)
     )
+
+
+def compare_snapshots(
+    conn: Connection,
+    from_snapshot_id: int,
+    to_snapshot_id: int,
+    params: ComparisonParams | None = None,
+) -> int:
+    """Compare two stored, complete snapshots of one repository (``from`` -> ``to``) and
+    store the comparison; returns its id.
+
+    Raises ``SnapshotNotFoundError`` / ``SnapshotNotCompleteError`` for an unusable
+    snapshot, ``SnapshotsNotComparableError`` for the same snapshot twice or snapshots of
+    different repositories, and ``ComparisonExistsError`` when this (from, to, algorithm
+    version, params) comparison is already stored, in any status. Both checks run
+    before either snapshot is loaded: comparisons are deterministic, so an existing one
+    is never recomputed or replaced. Snapshots that are not fully comparable are compared
+    and stored with their ``incomparable`` reasons. Storing is one transaction
+    (``persist_comparison``); loading the immutable snapshots needs none.
+    """
+    params = params or ComparisonParams()
+    snapshots = []
+    for snapshot_id in (from_snapshot_id, to_snapshot_id):
+        snapshot = queries.get_snapshot(conn, snapshot_id)
+        if snapshot is None:
+            raise SnapshotNotFoundError(f"snapshot {snapshot_id} does not exist")
+        if snapshot.status is not SnapshotStatus.COMPLETE:
+            raise SnapshotNotCompleteError(f"snapshot {snapshot_id} is {snapshot.status}")
+        snapshots.append(snapshot.identity)
+    if from_snapshot_id == to_snapshot_id:
+        raise SnapshotsNotComparableError(
+            f"snapshot {from_snapshot_id} cannot be compared with itself"
+        )
+    if snapshots[0].repository != snapshots[1].repository:
+        raise SnapshotsNotComparableError(
+            f"snapshots {from_snapshot_id} and {to_snapshot_id} belong to different repositories"
+        )
+    identity = (
+        comparison_algorithm.ALGORITHM,
+        comparison_algorithm.ALGORITHM_VERSION,
+        params.params_hash(),
+    )
+    existing = find_comparison(conn, from_snapshot_id, to_snapshot_id, *identity)
+    if existing is not None:
+        raise ComparisonExistsError(existing.id, existing.status)
+    comparison = compare(
+        load_snapshot(conn, from_snapshot_id), load_snapshot(conn, to_snapshot_id), params
+    )
+    return persist_comparison(conn, from_snapshot_id, to_snapshot_id, comparison, params.as_json())

@@ -11,15 +11,19 @@ from collections.abc import Sequence
 from xraymyrepo.cim import (
     Classification,
     ClassificationFacet,
+    ComparisonSummary,
     Edge,
+    EdgeChange,
     EdgeKind,
     Finding,
     Group,
     GroupEdge,
     InferredLayer,
+    NodeChange,
 )
 from xraymyrepo.cim.nodes import Node
 from xraymyrepo.cim.provenance import Provenance
+from xraymyrepo.persistence import comparison_queries as cq
 from xraymyrepo.persistence import derivation_queries as dq
 from xraymyrepo.persistence import queries
 from xraymyrepo.persistence.queries import NodeBrief as NodeBriefRecord
@@ -281,4 +285,47 @@ def metric_view(record: dq.MetricRecord) -> models.MetricView:
         metric=record.metric,
         value=record.value,
         provenance=Provenance(producer=record.producer, rule=record.rule),
+    )
+
+
+def comparison_summary(record: cq.ComparisonRecord) -> models.ComparisonRunSummary:
+    return models.ComparisonRunSummary(
+        id=record.id,
+        from_snapshot_id=record.from_snapshot_id,
+        to_snapshot_id=record.to_snapshot_id,
+        algorithm=record.algorithm,
+        algorithm_version=record.algorithm_version,
+        params_hash=record.params_hash,
+        incomparable=list(record.incomparable),
+        status=record.status,
+        failure_reason=record.failure_reason,
+        created_at=record.created_at,
+        finished_at=record.finished_at,
+    )
+
+
+def change_counts(summary: ComparisonSummary) -> models.ChangeCounts:
+    return models.ChangeCounts(nodes=dict(summary.nodes), edges=dict(summary.edges))
+
+
+def node_change_view(change: NodeChange) -> models.NodeChangeView:
+    return models.NodeChangeView(
+        key=change.key,
+        change=change.change,
+        kind=change.kind,
+        from_key=change.from_key,
+        to_key=change.to_key,
+        match_method=change.match_method,
+        confidence=change.confidence,
+        move_ambiguous=change.move_ambiguous,
+    )
+
+
+def edge_change_view(change: EdgeChange) -> models.EdgeChangeView:
+    return models.EdgeChangeView(
+        change=change.change,
+        kind=change.kind,
+        from_ref=change.from_ref,
+        to_ref=change.to_ref,
+        confidence=change.confidence,
     )
