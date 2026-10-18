@@ -7,6 +7,8 @@ cim + graph <- insights             (pure derivation: CIM in, CIM out)
 cim <- persistence <- api           (the API only reads, through persistence; it may also
                                      run the pure insights/graph code on request)
 architecture + insights + persistence <- orchestration (load -> derive -> persist)
+analyzer + persistence <- ingestion (repository URL -> snapshot; nothing below or the
+                                     API imports it)
 """
 
 from __future__ import annotations
@@ -21,7 +23,7 @@ from .conftest import ROOT
 PACKAGE = ROOT / "src" / "xraymyrepo"
 
 _DERIVATION = {"xraymyrepo.architecture", "xraymyrepo.insights"}
-_UPPER = {*_DERIVATION, "xraymyrepo.graph", "xraymyrepo.orchestration"}
+_UPPER = {*_DERIVATION, "xraymyrepo.graph", "xraymyrepo.orchestration", "xraymyrepo.ingestion"}
 _IO = {"xraymyrepo.persistence", "xraymyrepo.api", "psycopg", "fastapi", "starlette"}
 
 # Imports (top-level module names or xraymyrepo subpackages) each layer must not use.
@@ -31,13 +33,18 @@ FORBIDDEN = {
     "graph": {"xraymyrepo.analyzer", *(_UPPER - {"xraymyrepo.graph"}), *_IO},
     # The two derivation packages do not depend on each other.
     "architecture": {"xraymyrepo.analyzer", "xraymyrepo.insights", "xraymyrepo.orchestration",
-                     *_IO},
+                     "xraymyrepo.ingestion", *_IO},
     "insights": {"xraymyrepo.analyzer", "xraymyrepo.architecture", "xraymyrepo.orchestration",
-                 *_IO},
+                 "xraymyrepo.ingestion", *_IO},
     "persistence": {"xraymyrepo.analyzer", "xraymyrepo.api", *_UPPER, "fastapi", "starlette"},
     # On-request computations (change impact) use the pure insights and graph code; the
-    # API never derives-and-stores (orchestration) or touches the architecture algorithm.
-    "api": {"xraymyrepo.analyzer", "xraymyrepo.architecture", "xraymyrepo.orchestration"},
+    # API never derives-and-stores (orchestration), analyzes (analyzer, ingestion) or
+    # touches the architecture algorithm.
+    "api": {"xraymyrepo.analyzer", "xraymyrepo.architecture", "xraymyrepo.orchestration",
+            "xraymyrepo.ingestion"},
+    # Ingestion analyzes and persists; it does not derive or serve.
+    "ingestion": {"xraymyrepo.api", "xraymyrepo.architecture", "xraymyrepo.insights",
+                  "xraymyrepo.orchestration", "fastapi", "starlette"},
 }  # fmt: skip
 
 
@@ -79,3 +86,10 @@ def test_orchestration_imports() -> None:
     assert {"xraymyrepo.architecture", "xraymyrepo.insights", "xraymyrepo.persistence"} <= names
     for forbidden in ("xraymyrepo.api", "xraymyrepo.analyzer", "fastapi"):
         assert not any(n == forbidden or n.startswith(forbidden + ".") for n in names)
+
+
+def test_cli_imports() -> None:
+    """The ``xray`` entry point only dispatches to the commands' own modules."""
+    names = imports_of(PACKAGE / "cli.py")
+    ours = {n for n in names if n == "xraymyrepo" or n.startswith("xraymyrepo.")}
+    assert ours == {"xraymyrepo.analyzer.cli", "xraymyrepo.ingestion.cli"}

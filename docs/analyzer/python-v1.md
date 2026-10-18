@@ -19,6 +19,9 @@ doc.to_canonical_json()
 xray analyze path/to/repo [--commit SHA] [--repository HOST/OWNER/NAME] [-o cim.json]
 ```
 
+(`xray ingest`, which retrieves a GitHub commit and stores its snapshot, is documented in
+docs/ingestion/ingestion-v1.md.)
+
 ## Pipeline
 
 | Stage | Module | Output |
