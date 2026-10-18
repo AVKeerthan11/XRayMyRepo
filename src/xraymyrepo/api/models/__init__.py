@@ -16,6 +16,15 @@ from .architecture import (
     NodeLayer,
 )
 from .catalog import Repository, SnapshotDetail, SnapshotStats, SnapshotSummary
+from .change_risk import (
+    ChangeRiskCounts,
+    ChangeRiskDetail,
+    ChangeRiskRunSummary,
+    RiskFactorDetail,
+    RiskFactorSummary,
+    RiskItemDetail,
+    RiskItemSummary,
+)
 from .common import ApiModel, NodeBrief, Page, Problem
 from .comparison import (
     ChangeCounts,
@@ -40,6 +49,9 @@ from .service import Health, Readiness
 __all__ = [
     "ApiModel",
     "ChangeCounts",
+    "ChangeRiskCounts",
+    "ChangeRiskDetail",
+    "ChangeRiskRunSummary",
     "ClassificationDetail",
     "ComparisonDetail",
     "ComparisonRunSummary",
@@ -71,6 +83,10 @@ __all__ = [
     "Readiness",
     "Relationship",
     "Repository",
+    "RiskFactorDetail",
+    "RiskFactorSummary",
+    "RiskItemDetail",
+    "RiskItemSummary",
     "SearchHit",
     "SnapshotDetail",
     "SnapshotStats",

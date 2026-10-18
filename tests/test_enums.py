@@ -15,7 +15,11 @@ from xraymyrepo.cim import (
     NodeChangeKind,
     NodeKind,
     Origin,
+    RiskCaveat,
+    RiskFactorRule,
+    RiskLevel,
     Role,
+    Side,
     SnapshotStatus,
     TypeKind,
     UnresolvedReason,
@@ -114,3 +118,19 @@ def test_comparison_vocabularies_are_closed() -> None:
     }  # fmt: skip
     assert values(EdgeChangeKind) == {"added", "removed", "modified", "unchanged", "undetermined"}
     assert values(Incomparability) == {"extractor_version_differs", "config_differs"}
+
+
+def test_change_risk_vocabularies_are_closed() -> None:
+    assert values(RiskLevel) == {"low", "medium", "high"}  # no "safe", no "unknown"
+    assert values(RiskCaveat) == {
+        "incomparable_snapshots", "undetermined_changes", "incomplete_extraction",
+        "hidden_dependencies", "impact_bounded", "heuristic_paths",
+        "resolution_not_comparable", "dependent_resolution_changed",
+    }  # fmt: skip
+    assert values(RiskFactorRule) == {
+        "risk.change.kind", "risk.change.interface", "risk.impact.dependents",
+        "risk.impact.endpoints", "risk.change.sensitive_role", "risk.health.hub",
+        "risk.health.cycle", "risk.dependency.unresolved_after_removal",
+        "risk.test.no_dependent_test", "risk.cap.test_file",
+    }  # fmt: skip
+    assert values(Side) == {"from", "to"}

@@ -14,7 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from xraymyrepo.analyzer import analyze
-from xraymyrepo.api import Settings, create_app
+from xraymyrepo.api import Settings, create_app, cursors
 from xraymyrepo.cim import SnapshotDocument
 from xraymyrepo.cim.evidence import FactEvidence
 from xraymyrepo.persistence import persist_snapshot
@@ -388,3 +388,16 @@ def test_query_budget(client: TestClient, sid: int, statements: list[str], path:
                       and "by-ref" not in path and "diagnostics" not in path
                       and path != "/snapshots/{sid}" else params))  # fmt: skip
         assert len(statements) == budget, statements
+
+
+@pytest.mark.parametrize(
+    "cursor",
+    [
+        cursors.encode("a\x00b.py"),  # PostgreSQL text holds no NUL: rejected, never a 500
+        cursors.encode(7),  # not a key
+    ],
+)
+def test_tampered_node_listing_cursors_are_invalid(client: TestClient, sid: int,
+                                                   cursor: str) -> None:  # fmt: skip
+    problem(client.get(f"{API}/snapshots/{sid}/nodes", params={"cursor": cursor}), 400,
+            "invalid_cursor")  # fmt: skip

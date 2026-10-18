@@ -12,11 +12,18 @@ import base64
 import binascii
 import json
 from collections.abc import Callable, Sequence
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import Field, StringConstraints, TypeAdapter, ValidationError
 
 from .errors import ApiError
+
+# Cursor parts bounded like the SQL values they are compared with, so a tampered cursor
+# is rejected here (invalid_cursor) instead of failing in the database.
+Id = Annotated[int, Field(ge=0, le=2**63 - 1)]
+"""A database id (``bigint``)."""
+Key = Annotated[str, StringConstraints(pattern=r"^[^\x00]*$")]
+"""A key or other text: PostgreSQL text cannot hold NUL."""
 
 
 def encode(sort_key: Sequence[Any] | int | str) -> str:

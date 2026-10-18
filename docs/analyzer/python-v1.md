@@ -188,7 +188,9 @@ Targets, for `from m import n` (most specific node first):
 5. otherwise (a variable, `*`, or a file that failed to parse) → the module file.
 
 `import a.b` targets `a/b.py` (or `a/b/__init__.py`). An import that reaches only a namespace directory
-cannot target a node and is unresolved (`py.import.namespace_package`). An import of a module's own name
+cannot target a node and is unresolved (`py.import.namespace_package`); for `from ns import n` its
+`raw_text` is the specifier joined with the name (`ns.n`; `.n` after a bare `.`), which change risk matches
+exactly (docs/insights/change-risk-v1.md). An import of a module's own name
 from itself is dropped (`IMPORTS` cannot self-loop). Dynamic imports resolve only with a literal absolute
 module name (`is_dynamic: true`, rule `py.import.dynamic_call`). Otherwise they are unresolved,
 `dynamic`, with the call text as `raw_text`.

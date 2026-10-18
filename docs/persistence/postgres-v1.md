@@ -1,11 +1,11 @@
-# Persistence v1: PostgreSQL snapshot, derivation and comparison store
+# Persistence v1: PostgreSQL snapshot, derivation, comparison and change-risk store
 
-PostgreSQL is the system of record for completed CIM snapshots, the derivations computed from them and the
-comparisons between them.
+PostgreSQL is the system of record for completed CIM snapshots, the derivations computed from them, the
+comparisons between them and the change risk of those comparisons.
 `xraymyrepo.persistence` stores a validated `SnapshotDocument` (snapshot tier, migrations 0001–0002) or
 `Derivation` (derivation tier, migration 0003) and loads it back. It does not change the CIM: no new kinds or
-fields. It uses psycopg 3 and plain parameterized SQL, with no ORM. Derivations and comparisons: see their
-sections below.
+fields. It uses psycopg 3 and plain parameterized SQL, with no ORM. Derivations, comparisons and change risk:
+see their sections below.
 
 ```text
 repository → analyze() → SnapshotDocument → persist_snapshot() → PostgreSQL → load_snapshot() → SnapshotDocument
@@ -237,6 +237,73 @@ For the API: `get_comparison`, `list_comparisons` (the snapshot on either side, 
 `list_edge_changes` (canonical order, which is the storage order), both optionally filtered by change kind and
 node or edge kind. They return CIM `NodeChange` / `EdgeChange` records resolved to keys by joins. Row-to-record
 mapping (`_comparison_rows.py`) is shared with `load_comparison`.
+
+## Change risk (migration 0005)
+
+A `ChangeRiskAssessment` (CIM §8) is computed from one complete comparison and its two snapshots by
+`xraymyrepo.insights.change_risk` (docs/insights/change-risk-v1.md). Persistence stores and reads it without
+knowing how it was computed, and never imports `insights`.
+
+| Function | Does |
+| --- | --- |
+| `persist_change_risk(conn, comparison_id, assessment, params) -> int` | Stores the run as **complete** in one transaction; returns its id. |
+| `load_change_risk(conn, run_id) -> ChangeRiskAssessment` | Loads a complete run, validated, in canonical order (six queries). |
+| `find_change_risk(conn, comparison_id, algorithm, algorithm_version, params_hash) -> StoredRun \| None` | Looks a run up by identity, any status. |
+
+Errors: `ChangeRiskExistsError` (carries `run_id` and `status`), `ChangeRiskNotFoundError`,
+`ChangeRiskNotCompleteError`, and `ComparisonNotFoundError` / `ComparisonNotCompleteError` for the comparison.
+
+* **Tables.** `change_risk_run` (cascades with its comparison, and so with either snapshot), `change_risk_item`
+  (one per assessed file) and `change_risk_factor` (one per item and rule, with its evidence as JSONB).
+* **Identity.** `(comparison, algorithm, algorithm_version, params_hash)`, unique in `change_risk_run`. A second
+  persist of the same identity, in any status, raises `ChangeRiskExistsError` and changes nothing.
+* **Checked before the rows are written.** The assessment is `complete`, and `params` hashes to its
+  `params_hash`. The comparison exists, is complete and is the one the run names (its `ComparisonRun`, rebuilt
+  from the stored comparison and its two snapshots). Each failure leaves nothing behind.
+* **Lifecycle.** `INSERT change_risk_run` as `pending` (`params`, thresholds, caveats, `excluded_by_origin`),
+  then one `COPY` each for items and factors, then `pending → complete` with the run's level, confidence and
+  summary, all in one transaction.
+* **Database checks:**
+  * `change_risk_run_require_comparison`: runs are created only for complete comparisons, and
+    `incomparable_snapshots` is a run caveat exactly when the comparison is not fully comparable.
+  * Row CHECKs:
+    * every vocabulary, with no "safe" or "unknown" level;
+    * caveat lists are distinct known caveats;
+    * an item's confidence is what its caveats allow (`change_risk_confidence_of`, equal to
+      `CAVEAT_CONFIDENCE`);
+    * the test-file cap adds no points, and an absence without points has caveats;
+    * evidence holds 1–20 items.
+  * **Completing** (`change_risk_check_complete`, SQLSTATE `23000`) checks the rows against each other and
+    the comparison:
+    * each item has its `risk.change.kind` factor;
+    * points are the sum of the factors;
+    * the item is a file row of the comparison with that row's change;
+    * factor caveats are item caveats;
+    * levels follow from the points and the thresholds, or the cap;
+    * every item carries `incomparable_snapshots` when the run does;
+    * the summary counts the items;
+    * the run's level and confidence are the items'.
+* **References.** Each item's `(comparison_id, subject_key)` references the comparison's `node_change` row,
+  `DEFERRABLE INITIALLY DEFERRED`. Deleting a snapshot removes the comparison's rows and, through the run, the
+  items, and the reference is checked after both cascades.
+* **Immutability.** `change_risk_run_guard_immutable` (identity, params, thresholds and inputs never change;
+  only `pending → complete | failed`) and `change_risk_child_guard_immutable` (the 0002–0004 pattern).
+* **Stored results.** The run's `level`, `confidence` and `summary` are stored for reading without the items.
+  They are derived from the items, and checked on completion and again on load. `conclusive` is never stored.
+* **Round trip.** `load_change_risk(conn, persist_change_risk(conn, cid, a, params)) == a.canonical()`.
+
+### Change-risk read queries (`xraymyrepo.persistence.change_risk_queries`)
+
+For the API:
+* `get_change_risk`, `list_change_risks` (one comparison's runs, newest first), `change_risk_params` and
+  `change_risk_summary`. Run records include `capped_items` (some item carries `risk.cap.test_file`), which
+  is derived from the factors in the same statement and never stored.
+* `list_items`: items riskiest first (level, then points, then subject key; `change_risk_item_rank_idx`),
+  keyset-paged by `item_sort_key`, optionally filtered by levels, confidences and caveats (any of).
+* `get_item`.
+
+Items come back as CIM `RiskItem`s with their factors, in two statements whatever the page size. Row-to-record
+mapping (`_change_risk_rows.py`) is shared with `load_change_risk`.
 
 ## Decisions (2026-10-08)
 

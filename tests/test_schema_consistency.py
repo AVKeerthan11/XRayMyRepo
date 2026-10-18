@@ -9,6 +9,7 @@ import re
 import pytest
 
 from xraymyrepo.cim import (
+    CAVEAT_CONFIDENCE,
     EDGE_RULES,
     ClassificationFacet,
     Confidence,
@@ -23,6 +24,9 @@ from xraymyrepo.cim import (
     NodeChangeKind,
     Origin,
     ReferenceKind,
+    RiskCaveat,
+    RiskFactorRule,
+    RiskLevel,
     Role,
     SnapshotStatus,
     UnresolvedReason,
@@ -34,6 +38,7 @@ from .conftest import MIGRATIONS
 SQL = (MIGRATIONS / "0001_cim_v1_snapshot_tier.sql").read_text(encoding="utf-8")
 DERIVATION_SQL = (MIGRATIONS / "0003_derivation_tier.sql").read_text(encoding="utf-8")
 COMPARISON_SQL = (MIGRATIONS / "0004_snapshot_comparison.sql").read_text(encoding="utf-8")
+RISK_SQL = (MIGRATIONS / "0005_change_risk.sql").read_text(encoding="utf-8")
 
 
 def check_values(constraint: str, sql: str = SQL) -> set[str]:
@@ -187,3 +192,61 @@ def test_derivation_tier_shape() -> None:
         body = re.search(rf"CREATE TABLE {table} \((.*?)\n\);", DERIVATION_SQL, re.S)
         assert body, table
         assert re.search(r"PRIMARY KEY \(run_id,", body.group(1)), table
+
+
+@pytest.mark.parametrize(
+    ("constraint", "expected"),
+    [
+        ("change_risk_run_status_check", values(SnapshotStatus)),
+        ("change_risk_run_level_check", values(RiskLevel)),
+        ("change_risk_run_confidence_check", values(Confidence)),
+        ("change_risk_item_change_check", values(NodeChangeKind)),
+        ("change_risk_item_level_check", values(RiskLevel)),
+        ("change_risk_item_confidence_check", values(Confidence)),
+        ("change_risk_factor_rule_check", values(RiskFactorRule)),
+        ("change_risk_factor_confidence_check", values(Confidence)),
+    ],
+)
+def test_change_risk_check_constraint_matches_enum(constraint: str, expected: set[str]) -> None:
+    assert check_values(constraint, RISK_SQL) == expected
+
+
+def test_change_risk_caveats_and_their_confidence() -> None:
+    body = re.search(r"FUNCTION change_risk_caveats_valid\(.*?\$\$(.*?)\$\$;", RISK_SQL, re.S)
+    assert body
+    listed = re.search(r"NOT IN \((.*?)\)\)", body.group(1), re.S)
+    assert listed and set(re.findall(r"'([^']+)'", listed.group(1))) == values(RiskCaveat)
+    # change_risk_confidence_of is CAVEAT_CONFIDENCE: these low, any other medium.
+    confidence = re.search(r"FUNCTION change_risk_confidence_of\(.*?\$\$(.*?)\$\$;", RISK_SQL, re.S)
+    assert confidence
+    low = re.search(r"caveats \?\| ARRAY\[([^\]]*)\] THEN 'low'", confidence.group(1))
+    assert low and set(re.findall(r"'([^']+)'", low.group(1))) == {
+        c.value for c, v in CAVEAT_CONFIDENCE.items() if v is Confidence.LOW}  # fmt: skip
+    assert {v for v in CAVEAT_CONFIDENCE.values()} == {Confidence.LOW, Confidence.MEDIUM}
+
+
+def test_change_risk_summary_lists_every_level_and_confidence() -> None:
+    body = re.search(r"FUNCTION change_risk_summary_valid\(.*?\$\$(.*?)\$\$;", RISK_SQL, re.S)
+    assert body
+    arrays = re.findall(r"summary -> '(levels|confidences)' \?& ARRAY\[([^\]]*)\]", body.group(1))
+    keys = {side: set(re.findall(r"'([^']+)'", items)) for side, items in arrays}
+    assert keys == {"levels": values(RiskLevel), "confidences": values(Confidence)}
+
+
+def test_change_risk_tier_shape() -> None:
+    assert "CREATE TYPE" not in RISK_SQL.upper() and "USING gin" not in RISK_SQL
+    for migration in ("0001", "0002", "0003", "0004"):
+        assert "change_risk" not in next(MIGRATIONS.glob(f"{migration}_*.sql")).read_text(
+            encoding="utf-8")  # fmt: skip
+    for table in ("change_risk_item", "change_risk_factor"):
+        body = re.search(rf"CREATE TABLE {table} \((.*?)\n\);", RISK_SQL, re.S)
+        assert body, table
+        assert re.search(r"PRIMARY KEY \(run_id,", body.group(1)), table
+        assert "ON DELETE CASCADE" in body.group(1), table
+    item = re.search(r"CREATE TABLE change_risk_item \((.*?)\n\);", RISK_SQL, re.S)
+    # Every subject is a comparison row, referenced through the run's own comparison.
+    subject = (
+        r"FOREIGN KEY \(comparison_id, subject_key\)\s+"
+        r"REFERENCES node_change \(comparison_id, key\) DEFERRABLE INITIALLY DEFERRED"
+    )
+    assert item and re.search(subject, item.group(1))

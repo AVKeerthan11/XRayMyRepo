@@ -9,7 +9,13 @@ from fastapi import Depends, Path, Query, Request
 from xraymyrepo.cim import InvalidKeyError, NodeKind, SnapshotStatus
 from xraymyrepo.cim.enums import SNAPSHOT_NODE_KINDS
 from xraymyrepo.cim.keys import validate_key
-from xraymyrepo.persistence import comparison_queries, derivation_queries, queries
+from xraymyrepo.persistence import (
+    change_risk_queries,
+    comparison_queries,
+    derivation_queries,
+    queries,
+)
+from xraymyrepo.persistence.change_risk_queries import ChangeRiskRecord
 from xraymyrepo.persistence.comparison_queries import ComparisonRecord
 from xraymyrepo.persistence.derivation_queries import RunRecord
 from xraymyrepo.persistence.queries import SnapshotRecord
@@ -71,6 +77,21 @@ def complete_comparison(comparison_id: Annotated[int, Path(ge=1)], conn: Conn) -
 
 
 CompleteComparison = Annotated[ComparisonRecord, Depends(complete_comparison)]
+
+
+def complete_change_risk(run_id: Annotated[int, Path(ge=1)], conn: Conn) -> ChangeRiskRecord:
+    """The requested change-risk run, which must be complete for its items to be served.
+    Its comparison is complete too (runs are only created for complete comparisons)."""
+    record = change_risk_queries.get_change_risk(conn, run_id)
+    if record is None:
+        raise not_found("change_risk_not_found", f"Change risk run {run_id} does not exist.")
+    if record.status is not SnapshotStatus.COMPLETE:
+        raise ApiError(409, "change_risk_not_complete", "Change risk run not complete",
+                       f"Change risk run {run_id} is {record.status}.")  # fmt: skip
+    return record
+
+
+CompleteChangeRisk = Annotated[ChangeRiskRecord, Depends(complete_change_risk)]
 
 
 def checked_key(key: str, parameter: str) -> str:

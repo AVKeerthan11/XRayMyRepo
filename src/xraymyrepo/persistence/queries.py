@@ -51,6 +51,7 @@ REQUIRED_MIGRATIONS: tuple[str, ...] = (
     "0002_snapshot_children_immutable",
     "0003_derivation_tier",
     "0004_snapshot_comparison",
+    "0005_change_risk",
 )
 """Migrations this code depends on, in order."""
 

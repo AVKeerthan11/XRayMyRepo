@@ -52,7 +52,7 @@ router = APIRouter(tags=["architecture"])
 RUN = "/derivations/{run_id}"
 _RUN_PROBLEMS = {"conflict": "Derivation run not complete"}
 
-_ID_CURSOR: TypeAdapter[int] = TypeAdapter(int)
+_ID_CURSOR: TypeAdapter[int] = TypeAdapter(cursors.Id)  # runs and findings: bigint ids
 _KEY_CURSOR: TypeAdapter[str] = TypeAdapter(str)
 _GROUP_EDGE_CURSOR: TypeAdapter[dq.GroupEdgeSortKey] = TypeAdapter(dq.GroupEdgeSortKey)
 _METRIC_CURSOR: TypeAdapter[dq.MetricSortKey] = TypeAdapter(dq.MetricSortKey)

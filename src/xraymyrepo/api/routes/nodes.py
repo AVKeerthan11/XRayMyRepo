@@ -28,7 +28,7 @@ Kinds = Annotated[
 ]
 
 _CHILD_CURSOR: TypeAdapter[queries.ChildSortKey] = TypeAdapter(queries.ChildSortKey)
-_KEY_CURSOR: TypeAdapter[str] = TypeAdapter(str)
+_KEY_CURSOR: TypeAdapter[str] = TypeAdapter(cursors.Key)
 _SEARCH_CURSOR: TypeAdapter[queries.SearchSortKey] = TypeAdapter(queries.SearchSortKey)
 
 

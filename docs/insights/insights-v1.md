@@ -5,7 +5,8 @@
 `xraymyrepo.cim` and the shared `xraymyrepo.graph`.
 
 Milestone 6 adds it in phases: **health findings** (phase 1) and **change impact** (phase 2) are described
-here; snapshot comparison and change risk follow.
+here. **Snapshot comparison** (phase 3) is in docs/comparison/comparison-v1.md, and **change risk**
+(phase 4) in docs/insights/change-risk-v1.md.
 
 ## Health (`algorithm = "health"`, version `1.0.0`)
 

@@ -226,7 +226,7 @@ def count(conn: Any, table: str, cid: int) -> int:
 
 def test_migrations_are_registered(conn: Any) -> None:
     files = tuple(p.stem for p in sorted(MIGRATIONS.glob("*.sql")))
-    assert files == REQUIRED_MIGRATIONS and files[-1] == "0004_snapshot_comparison"
+    assert files == REQUIRED_MIGRATIONS and "0004_snapshot_comparison" in files
     applied = conn.execute("SELECT version FROM schema_migration ORDER BY version").fetchall()
     assert tuple(r[0] for r in applied) == REQUIRED_MIGRATIONS
 

@@ -311,6 +311,39 @@ changes.
 * `summary()` counts node and edge changes by kind (every kind present); `canonical()` orders node changes
   by key (`to`, else `from`) and edge changes by ref.
 
+### Change risk
+
+`ChangeRiskAssessment(run, items, caveats, excluded_by_origin)` says how much each changed file of one
+complete comparison could break other code (`src/xraymyrepo/cim/change_risk.py`). It is additive: no snapshot
+or comparison model changes.
+
+* **Run.** `ChangeRiskRun(comparison, algorithm, algorithm_version, params_hash, medium_at, high_at, status)`.
+  `comparison` is the assessed `ComparisonRun` (complete). The thresholds are recorded so every level can be
+  checked against its points.
+* **Items** (`RiskItem`), one per changed file, keyed like the comparison's rows (`to` key, else `from`):
+  `change`, `level` (`RiskLevel`: `low`, `medium`, `high`), integer `points`, `confidence`, `caveats` and
+  `factors`.
+  * Each `RiskFactor` has a closed `rule` (`RiskFactorRule`), points ≥ 0, the measured `value`, a confidence,
+    a message, 1–20 `RiskEvidence` items and its own caveats.
+  * An item's points are the sum of its factors' points, and it starts with `risk.change.kind`.
+  * The level follows from the points and the thresholds, except that a test-file subject carrying
+    `risk.cap.test_file` is `low`. The cap is the test subject's own.
+* **A level is a lower bound on what was observed.** Factors only add points. A `RiskCaveat` lowers
+  confidence (`CAVEAT_CONFIDENCE`) and never changes points.
+  * An item's confidence is the lowest its caveats allow (`high` without).
+  * `conclusive` (derived) is `high` confidence, no caveat and not `capped` (`capped`, derived too: the item
+    carries `risk.cap.test_file`, so its `low` is a policy rather than what its points say). An assessment is
+    conclusive only when every item is.
+  * `low` with `conclusive` false is never evidence of safety; there is no "safe" or "unknown" level.
+  * An absence factor without points must say why (its caveats).
+  * `incomparable_snapshots` is on the assessment and every item exactly when the comparison is not fully
+    comparable.
+* **Evidence.** `RiskEvidence(side, node_keys, edge_refs, spans)` cites nodes, edges and `SpanRef`s in the
+  keys of one snapshot (`Side`: `from` or `to`). `DerivedEvidence` keeps its one-snapshot meaning.
+* **Derived views.** `level` (the highest item level), `confidence`, `conclusive`, `summary()` (items by
+  level and by confidence) and `canonical()` (items by subject key, factors in rule order). The algorithm
+  and its rules: docs/insights/change-risk-v1.md.
+
 ## 9. Interpretation layer
 
 `Annotation(id, snapshot, subject, kind ∈ label | summary | explanation, content, model, prompt_version,

@@ -242,6 +242,58 @@ class Incomparability(StrEnum):
     CONFIG_DIFFERS = "config_differs"
 
 
+class RiskLevel(StrEnum):
+    """How much a change could break other code, as a lower bound on what was observed
+    (see ``change_risk.py``). There is deliberately no "safe" or "unknown" level."""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+    @property
+    def rank(self) -> int:
+        return _RISK_RANK[self]
+
+
+_RISK_RANK = {RiskLevel.LOW: 0, RiskLevel.MEDIUM: 1, RiskLevel.HIGH: 2}
+
+
+class RiskCaveat(StrEnum):
+    """Why an assessment may understate the risk. Caveats lower confidence; they never
+    add or remove points."""
+
+    INCOMPARABLE_SNAPSHOTS = "incomparable_snapshots"
+    UNDETERMINED_CHANGES = "undetermined_changes"
+    INCOMPLETE_EXTRACTION = "incomplete_extraction"
+    HIDDEN_DEPENDENCIES = "hidden_dependencies"
+    IMPACT_BOUNDED = "impact_bounded"
+    HEURISTIC_PATHS = "heuristic_paths"
+    RESOLUTION_NOT_COMPARABLE = "resolution_not_comparable"
+    DEPENDENT_RESOLUTION_CHANGED = "dependent_resolution_changed"
+
+
+class RiskFactorRule(StrEnum):
+    """The closed set of change-risk factors (docs/insights/change-risk-v1.md)."""
+
+    CHANGE_KIND = "risk.change.kind"
+    CHANGE_INTERFACE = "risk.change.interface"
+    IMPACT_DEPENDENTS = "risk.impact.dependents"
+    IMPACT_ENDPOINTS = "risk.impact.endpoints"
+    SENSITIVE_ROLE = "risk.change.sensitive_role"
+    HEALTH_HUB = "risk.health.hub"
+    HEALTH_CYCLE = "risk.health.cycle"
+    UNRESOLVED_AFTER_REMOVAL = "risk.dependency.unresolved_after_removal"
+    NO_DEPENDENT_TEST = "risk.test.no_dependent_test"
+    TEST_FILE_CAP = "risk.cap.test_file"
+
+
+class Side(StrEnum):
+    """Which snapshot of a comparison a key, edge ref or span belongs to."""
+
+    FROM = "from"
+    TO = "to"
+
+
 class AnnotationKind(StrEnum):
     LABEL = "label"
     SUMMARY = "summary"

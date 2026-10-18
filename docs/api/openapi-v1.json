@@ -151,6 +151,318 @@
         "title": "ChangeCounts",
         "type": "object"
       },
+      "ChangeRiskCounts": {
+        "additionalProperties": false,
+        "description": "Items by level and by confidence; every value present, zeros included.",
+        "properties": {
+          "confidences": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/Confidence"
+            },
+            "title": "Confidences",
+            "type": "object"
+          },
+          "levels": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/RiskLevel"
+            },
+            "title": "Levels",
+            "type": "object"
+          }
+        },
+        "required": [
+          "levels",
+          "confidences"
+        ],
+        "title": "ChangeRiskCounts",
+        "type": "object"
+      },
+      "ChangeRiskDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "title": "Algorithm",
+            "type": "string"
+          },
+          "algorithm_version": {
+            "title": "Algorithm Version",
+            "type": "string"
+          },
+          "caveats": {
+            "description": "Caveats of the whole run (`incomparable_snapshots` when the comparison is not fully comparable).",
+            "items": {
+              "$ref": "#/components/schemas/RiskCaveat"
+            },
+            "title": "Caveats",
+            "type": "array"
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/ComparisonRunSummary"
+          },
+          "comparison_id": {
+            "title": "Comparison Id",
+            "type": "integer"
+          },
+          "conclusive": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "High confidence, no caveat and not capped (a run: no capped item). A `low` level that is not conclusive means no risk was observed in what could be seen; it is not evidence that the change is safe. Null until complete.",
+            "title": "Conclusive"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Confidence"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lowest item confidence, at most what the run's caveats allow; null until complete."
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ChangeRiskCounts"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "excluded_by_origin": {
+            "description": "Changed files not assessed because of their origin (e.g. docs)",
+            "title": "Excluded By Origin",
+            "type": "integer"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "high_at": {
+            "description": "Points from which an item is `high`",
+            "title": "High At",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RiskLevel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The highest item level, a lower bound on what was observed; null until complete."
+          },
+          "medium_at": {
+            "description": "Points from which an item is `medium`",
+            "title": "Medium At",
+            "type": "integer"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "params_hash": {
+            "title": "Params Hash",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SnapshotStatus"
+          }
+        },
+        "required": [
+          "id",
+          "comparison_id",
+          "algorithm",
+          "algorithm_version",
+          "params_hash",
+          "medium_at",
+          "high_at",
+          "caveats",
+          "excluded_by_origin",
+          "level",
+          "confidence",
+          "conclusive",
+          "status",
+          "failure_reason",
+          "created_at",
+          "finished_at",
+          "comparison",
+          "params",
+          "counts"
+        ],
+        "title": "ChangeRiskDetail",
+        "type": "object"
+      },
+      "ChangeRiskRunSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "title": "Algorithm",
+            "type": "string"
+          },
+          "algorithm_version": {
+            "title": "Algorithm Version",
+            "type": "string"
+          },
+          "caveats": {
+            "description": "Caveats of the whole run (`incomparable_snapshots` when the comparison is not fully comparable).",
+            "items": {
+              "$ref": "#/components/schemas/RiskCaveat"
+            },
+            "title": "Caveats",
+            "type": "array"
+          },
+          "comparison_id": {
+            "title": "Comparison Id",
+            "type": "integer"
+          },
+          "conclusive": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "High confidence, no caveat and not capped (a run: no capped item). A `low` level that is not conclusive means no risk was observed in what could be seen; it is not evidence that the change is safe. Null until complete.",
+            "title": "Conclusive"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Confidence"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lowest item confidence, at most what the run's caveats allow; null until complete."
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "excluded_by_origin": {
+            "description": "Changed files not assessed because of their origin (e.g. docs)",
+            "title": "Excluded By Origin",
+            "type": "integer"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "high_at": {
+            "description": "Points from which an item is `high`",
+            "title": "High At",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RiskLevel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The highest item level, a lower bound on what was observed; null until complete."
+          },
+          "medium_at": {
+            "description": "Points from which an item is `medium`",
+            "title": "Medium At",
+            "type": "integer"
+          },
+          "params_hash": {
+            "title": "Params Hash",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SnapshotStatus"
+          }
+        },
+        "required": [
+          "id",
+          "comparison_id",
+          "algorithm",
+          "algorithm_version",
+          "params_hash",
+          "medium_at",
+          "high_at",
+          "caveats",
+          "excluded_by_origin",
+          "level",
+          "confidence",
+          "conclusive",
+          "status",
+          "failure_reason",
+          "created_at",
+          "finished_at"
+        ],
+        "title": "ChangeRiskRunSummary",
+        "type": "object"
+      },
       "ClassificationDetail": {
         "additionalProperties": false,
         "properties": {
@@ -2653,6 +2965,36 @@
         "title": "Page[BlindSpotView]",
         "type": "object"
       },
+      "Page_ChangeRiskRunSummary_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ChangeRiskRunSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[ChangeRiskRunSummary]",
+        "type": "object"
+      },
       "Page_ComparisonRunSummary_": {
         "additionalProperties": false,
         "properties": {
@@ -3041,6 +3383,36 @@
           "next_cursor"
         ],
         "title": "Page[Repository]",
+        "type": "object"
+      },
+      "Page_RiskItemSummary_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RiskItemSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Opaque; pass as `cursor` to get the next page. Null on the last page.",
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[RiskItemSummary]",
         "type": "object"
       },
       "Page_SearchHit_": {
@@ -3475,6 +3847,307 @@
         "title": "RequiresAttributes",
         "type": "object"
       },
+      "RiskCaveat": {
+        "description": "Why an assessment may understate the risk. Caveats lower confidence; they never\nadd or remove points.",
+        "enum": [
+          "incomparable_snapshots",
+          "undetermined_changes",
+          "incomplete_extraction",
+          "hidden_dependencies",
+          "impact_bounded",
+          "heuristic_paths",
+          "resolution_not_comparable",
+          "dependent_resolution_changed"
+        ],
+        "title": "RiskCaveat",
+        "type": "string"
+      },
+      "RiskEvidence": {
+        "additionalProperties": false,
+        "description": "Concrete records a factor rests on, in the keys of one snapshot.",
+        "properties": {
+          "edge_refs": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/EdgeRef"
+            },
+            "title": "Edge Refs",
+            "type": "array"
+          },
+          "node_keys": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Node Keys",
+            "type": "array"
+          },
+          "side": {
+            "$ref": "#/components/schemas/Side"
+          },
+          "spans": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/SpanRef"
+            },
+            "title": "Spans",
+            "type": "array"
+          }
+        },
+        "required": [
+          "side"
+        ],
+        "title": "RiskEvidence",
+        "type": "object"
+      },
+      "RiskFactorDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "caveats": {
+            "description": "Why this factor may be incomplete; an absence factor with 0 points says why it was not scored.",
+            "items": {
+              "$ref": "#/components/schemas/RiskCaveat"
+            },
+            "title": "Caveats",
+            "type": "array"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "evidence": {
+            "description": "Node keys, edge refs and spans, each in the keys of the snapshot its `side` names (at most 20).",
+            "items": {
+              "$ref": "#/components/schemas/RiskEvidence"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "points": {
+            "description": "Points this factor adds (never negative)",
+            "title": "Points",
+            "type": "integer"
+          },
+          "rule": {
+            "$ref": "#/components/schemas/RiskFactorRule"
+          },
+          "value": {
+            "description": "What the rule measured: dependents, declarations, matches",
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rule",
+          "points",
+          "value",
+          "confidence",
+          "message",
+          "caveats",
+          "evidence"
+        ],
+        "title": "RiskFactorDetail",
+        "type": "object"
+      },
+      "RiskFactorRule": {
+        "description": "The closed set of change-risk factors (docs/insights/change-risk-v1.md).",
+        "enum": [
+          "risk.change.kind",
+          "risk.change.interface",
+          "risk.impact.dependents",
+          "risk.impact.endpoints",
+          "risk.change.sensitive_role",
+          "risk.health.hub",
+          "risk.health.cycle",
+          "risk.dependency.unresolved_after_removal",
+          "risk.test.no_dependent_test",
+          "risk.cap.test_file"
+        ],
+        "title": "RiskFactorRule",
+        "type": "string"
+      },
+      "RiskFactorSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "caveats": {
+            "description": "Why this factor may be incomplete; an absence factor with 0 points says why it was not scored.",
+            "items": {
+              "$ref": "#/components/schemas/RiskCaveat"
+            },
+            "title": "Caveats",
+            "type": "array"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "points": {
+            "description": "Points this factor adds (never negative)",
+            "title": "Points",
+            "type": "integer"
+          },
+          "rule": {
+            "$ref": "#/components/schemas/RiskFactorRule"
+          },
+          "value": {
+            "description": "What the rule measured: dependents, declarations, matches",
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rule",
+          "points",
+          "value",
+          "confidence",
+          "message",
+          "caveats"
+        ],
+        "title": "RiskFactorSummary",
+        "type": "object"
+      },
+      "RiskItemDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "capped": {
+            "description": "A test file whose level is capped at `low` by policy (`risk.cap.test_file`); its points are not. A capped item is never conclusive.",
+            "title": "Capped",
+            "type": "boolean"
+          },
+          "caveats": {
+            "items": {
+              "$ref": "#/components/schemas/RiskCaveat"
+            },
+            "title": "Caveats",
+            "type": "array"
+          },
+          "change": {
+            "$ref": "#/components/schemas/NodeChangeKind",
+            "description": "The file's own node change"
+          },
+          "conclusive": {
+            "description": "High confidence, no caveat and not capped (a run: no capped item). A `low` level that is not conclusive means no risk was observed in what could be seen; it is not evidence that the change is safe.",
+            "title": "Conclusive",
+            "type": "boolean"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "factors": {
+            "description": "In rule order, with their evidence",
+            "items": {
+              "$ref": "#/components/schemas/RiskFactorDetail"
+            },
+            "title": "Factors",
+            "type": "array"
+          },
+          "level": {
+            "$ref": "#/components/schemas/RiskLevel",
+            "description": "A lower bound on what was observed"
+          },
+          "points": {
+            "title": "Points",
+            "type": "integer"
+          },
+          "subject_key": {
+            "description": "The file's key in `to`, else in `from`",
+            "title": "Subject Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject_key",
+          "change",
+          "level",
+          "points",
+          "confidence",
+          "capped",
+          "conclusive",
+          "caveats",
+          "factors"
+        ],
+        "title": "RiskItemDetail",
+        "type": "object"
+      },
+      "RiskItemSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "capped": {
+            "description": "A test file whose level is capped at `low` by policy (`risk.cap.test_file`); its points are not. A capped item is never conclusive.",
+            "title": "Capped",
+            "type": "boolean"
+          },
+          "caveats": {
+            "items": {
+              "$ref": "#/components/schemas/RiskCaveat"
+            },
+            "title": "Caveats",
+            "type": "array"
+          },
+          "change": {
+            "$ref": "#/components/schemas/NodeChangeKind",
+            "description": "The file's own node change"
+          },
+          "conclusive": {
+            "description": "High confidence, no caveat and not capped (a run: no capped item). A `low` level that is not conclusive means no risk was observed in what could be seen; it is not evidence that the change is safe.",
+            "title": "Conclusive",
+            "type": "boolean"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "factors": {
+            "description": "In rule order, without evidence",
+            "items": {
+              "$ref": "#/components/schemas/RiskFactorSummary"
+            },
+            "title": "Factors",
+            "type": "array"
+          },
+          "level": {
+            "$ref": "#/components/schemas/RiskLevel",
+            "description": "A lower bound on what was observed"
+          },
+          "points": {
+            "title": "Points",
+            "type": "integer"
+          },
+          "subject_key": {
+            "description": "The file's key in `to`, else in `from`",
+            "title": "Subject Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject_key",
+          "change",
+          "level",
+          "points",
+          "confidence",
+          "capped",
+          "conclusive",
+          "caveats",
+          "factors"
+        ],
+        "title": "RiskItemSummary",
+        "type": "object"
+      },
+      "RiskLevel": {
+        "description": "How much a change could break other code, as a lower bound on what was observed\n(see ``change_risk.py``). There is deliberately no \"safe\" or \"unknown\" level.",
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "title": "RiskLevel",
+        "type": "string"
+      },
       "SearchHit": {
         "additionalProperties": false,
         "properties": {
@@ -3496,6 +4169,15 @@
         ],
         "title": "SearchHit",
         "type": "object"
+      },
+      "Side": {
+        "description": "Which snapshot of a comparison a key, edge ref or span belongs to.",
+        "enum": [
+          "from",
+          "to"
+        ],
+        "title": "Side",
+        "type": "string"
       },
       "SnapshotDetail": {
         "additionalProperties": false,
@@ -3839,6 +4521,39 @@
         "title": "SpanEvidence",
         "type": "object"
       },
+      "SpanRef": {
+        "additionalProperties": false,
+        "description": "A line range of a file, for citing source text directly.",
+        "properties": {
+          "end_line": {
+            "minimum": 1.0,
+            "title": "End Line",
+            "type": "integer"
+          },
+          "file_key": {
+            "title": "File Key",
+            "type": "string"
+          },
+          "ref": {
+            "const": "span",
+            "title": "Ref",
+            "type": "string"
+          },
+          "start_line": {
+            "minimum": 1.0,
+            "title": "Start Line",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ref",
+          "file_key",
+          "start_line",
+          "end_line"
+        ],
+        "title": "SpanRef",
+        "type": "object"
+      },
       "Tag": {
         "additionalProperties": false,
         "description": "A classification reduced to facet and value, for badges and colouring.",
@@ -3978,6 +4693,407 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/change-risks/{run_id}": {
+      "get": {
+        "operationId": "get_change_risk_api_v1_change_risks__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRiskDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Change risk run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "A change-risk run: its comparison, parameters, level, confidence and counts",
+        "tags": [
+          "change risk"
+        ]
+      }
+    },
+    "/api/v1/change-risks/{run_id}/items": {
+      "get": {
+        "description": "Ordered by level (high first), points (most first), then subject key. Factors come\nwithout their evidence; ``items/by-key`` has it.",
+        "operationId": "list_items_api_v1_change_risks__run_id__items_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Repeatable filter",
+            "in": "query",
+            "name": "level",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/RiskLevel"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repeatable filter",
+              "title": "Level"
+            }
+          },
+          {
+            "description": "Repeatable filter",
+            "in": "query",
+            "name": "confidence",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/Confidence"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repeatable filter",
+              "title": "Confidence"
+            }
+          },
+          {
+            "description": "Repeatable: items with any of these caveats",
+            "in": "query",
+            "name": "caveat",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/RiskCaveat"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repeatable: items with any of these caveats",
+              "title": "Caveat"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_RiskItemSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Change risk run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Risk items, riskiest first, optionally by level, confidence and caveat",
+        "tags": [
+          "change risk"
+        ]
+      }
+    },
+    "/api/v1/change-risks/{run_id}/items/by-key": {
+      "get": {
+        "operationId": "get_item_api_v1_change_risks__run_id__items_by_key_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Run Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "A file key: the subject's key in `to`, else `from`",
+            "in": "query",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "description": "A file key: the subject's key in `to`, else `from`",
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskItemDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Change risk run not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "One risk item, with every factor's evidence",
+        "tags": [
+          "change risk"
+        ]
+      }
+    },
     "/api/v1/comparisons/{comparison_id}": {
       "get": {
         "operationId": "get_comparison_api_v1_comparisons__comparison_id__get",
@@ -4068,6 +5184,147 @@
         "summary": "A comparison: both snapshots, parameters, comparability and change counts",
         "tags": [
           "comparison"
+        ]
+      }
+    },
+    "/api/v1/comparisons/{comparison_id}/change-risks": {
+      "get": {
+        "description": "Any status (pending and failed runs included).",
+        "operationId": "list_change_risks_api_v1_comparisons__comparison_id__change_risks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparison_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Comparison Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "description": "Page size",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`next_cursor` of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`next_cursor` of the previous page",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ChangeRiskRunSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid cursor"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Comparison not complete"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Invalid parameters or key"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Database unavailable"
+          }
+        },
+        "summary": "Change-risk runs of a comparison, newest first",
+        "tags": [
+          "change risk"
         ]
       }
     },

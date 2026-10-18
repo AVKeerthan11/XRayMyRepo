@@ -1,0 +1,72 @@
+{
+  "run": {
+    "comparison": {
+      "from_snapshot": {"repository": {"host": "github.com", "owner": "xraymyrepo", "name": "comparison-fixture"}, "commit_sha": "1111111111111111111111111111111111111111", "extractor_version": "0.2.0", "config_hash": "sha256:bf362b58b1b8e8292e70b2708ca6ecf932c88a47746dcf472d5377f8ef357563"},
+      "to_snapshot": {"repository": {"host": "github.com", "owner": "xraymyrepo", "name": "comparison-fixture"}, "commit_sha": "2222222222222222222222222222222222222222", "extractor_version": "0.2.0", "config_hash": "sha256:bf362b58b1b8e8292e70b2708ca6ecf932c88a47746dcf472d5377f8ef357563"},
+      "algorithm": "comparison",
+      "algorithm_version": "1.0.0",
+      "params_hash": "sha256:6f17efed0a7531d2200d484a305000aed1207a82e513d51c09e074161fce1fbf",
+      "incomparable": [],
+      "status": "complete"
+    },
+    "algorithm": "change_risk",
+    "algorithm_version": "1.0.0",
+    "params_hash": "sha256:22f1bc792b942a06f0176f452a9336e3c7a8e4053a61320e6c6038cef11ac301",
+    "medium_at": 2,
+    "high_at": 4,
+    "status": "complete"
+  },
+  "items": [
+    {"subject_key": "shop/a/template.py", "change": "removed", "level": "high", "points": 4, "confidence": "high", "factors": [
+      {"rule": "risk.change.kind", "points": 2, "value": 1, "confidence": "high", "message": "the file is removed", "evidence": [{"side": "from", "node_keys": ["shop/a/template.py"]}]},
+      {"rule": "risk.change.interface", "points": 2, "value": 1, "confidence": "high", "message": "1 declaration(s) removed, 0 with a changed signature", "evidence": [{"side": "from", "node_keys": ["shop/a/template.py#render"]}]}
+    ]},
+    {"subject_key": "shop/b/template.py", "change": "added", "level": "low", "points": 0, "confidence": "medium", "caveats": ["hidden_dependencies"], "factors": [
+      {"rule": "risk.change.kind", "points": 0, "value": 1, "confidence": "high", "message": "the file is added", "evidence": [{"side": "to", "node_keys": ["shop/b/template.py"]}]},
+      {"rule": "risk.test.no_dependent_test", "points": 0, "value": 0, "confidence": "low", "message": "no dependent test seen, but tests may be hidden: not scored", "evidence": [{"side": "to", "node_keys": ["shop/b/template.py"]}], "caveats": ["hidden_dependencies"]}
+    ]},
+    {"subject_key": "shop/c/template.py", "change": "added", "level": "low", "points": 0, "confidence": "medium", "caveats": ["hidden_dependencies"], "factors": [
+      {"rule": "risk.change.kind", "points": 0, "value": 1, "confidence": "high", "message": "the file is added", "evidence": [{"side": "to", "node_keys": ["shop/c/template.py"]}]},
+      {"rule": "risk.test.no_dependent_test", "points": 0, "value": 0, "confidence": "low", "message": "no dependent test seen, but tests may be hidden: not scored", "evidence": [{"side": "to", "node_keys": ["shop/c/template.py"]}], "caveats": ["hidden_dependencies"]}
+    ]},
+    {"subject_key": "shop/catalog.py", "change": "added", "level": "low", "points": 1, "confidence": "medium", "caveats": ["hidden_dependencies"], "factors": [
+      {"rule": "risk.change.kind", "points": 0, "value": 1, "confidence": "high", "message": "the file is added", "evidence": [{"side": "to", "node_keys": ["shop/catalog.py"]}]},
+      {"rule": "risk.impact.dependents", "points": 1, "value": 1, "confidence": "high", "message": "1 dependent file(s) within 3 hop(s)", "evidence": [{"side": "to", "node_keys": ["shop/pricing.py"], "edge_refs": [{"ref": "edge", "kind": "IMPORTS", "source_key": "shop/pricing.py", "target_key": "shop/catalog.py#find"}]}], "caveats": ["hidden_dependencies"]},
+      {"rule": "risk.test.no_dependent_test", "points": 0, "value": 0, "confidence": "low", "message": "no dependent test seen, but tests may be hidden: not scored", "evidence": [{"side": "to", "node_keys": ["shop/catalog.py"]}], "caveats": ["hidden_dependencies"]}
+    ]},
+    {"subject_key": "shop/checkout.py", "change": "modified", "level": "low", "points": 1, "confidence": "medium", "caveats": ["hidden_dependencies"], "factors": [
+      {"rule": "risk.change.kind", "points": 1, "value": 1, "confidence": "high", "message": "the file is modified", "evidence": [{"side": "to", "node_keys": ["shop/checkout.py"]}]},
+      {"rule": "risk.test.no_dependent_test", "points": 0, "value": 0, "confidence": "low", "message": "no dependent test seen, but tests may be hidden: not scored", "evidence": [{"side": "to", "node_keys": ["shop/checkout.py"]}], "caveats": ["hidden_dependencies"]}
+    ]},
+    {"subject_key": "shop/consts.py", "change": "removed", "level": "medium", "points": 2, "confidence": "high", "factors": [
+      {"rule": "risk.change.kind", "points": 2, "value": 1, "confidence": "high", "message": "the file is removed", "evidence": [{"side": "from", "node_keys": ["shop/consts.py"]}]}
+    ]},
+    {"subject_key": "shop/legacy.py", "change": "removed", "level": "high", "points": 5, "confidence": "high", "factors": [
+      {"rule": "risk.change.kind", "points": 2, "value": 1, "confidence": "high", "message": "the file is removed", "evidence": [{"side": "from", "node_keys": ["shop/legacy.py"]}]},
+      {"rule": "risk.change.interface", "points": 2, "value": 1, "confidence": "high", "message": "1 declaration(s) removed, 0 with a changed signature", "evidence": [{"side": "from", "node_keys": ["shop/legacy.py#old_discount"]}]},
+      {"rule": "risk.impact.dependents", "points": 1, "value": 2, "confidence": "high", "message": "2 dependent file(s) within 3 hop(s)", "evidence": [{"side": "from", "node_keys": ["shop/pricing.py"], "edge_refs": [{"ref": "edge", "kind": "IMPORTS", "source_key": "shop/pricing.py", "target_key": "shop/legacy.py#old_discount"}]}, {"side": "from", "node_keys": ["shop/report.py"], "edge_refs": [{"ref": "edge", "kind": "IMPORTS", "source_key": "shop/pricing.py", "target_key": "shop/legacy.py#old_discount"}, {"ref": "edge", "kind": "IMPORTS", "source_key": "shop/report.py", "target_key": "shop/pricing.py#Cart"}]}]}
+    ]},
+    {"subject_key": "shop/new/shipping.py", "change": "moved", "level": "medium", "points": 2, "confidence": "medium", "caveats": ["hidden_dependencies"], "factors": [
+      {"rule": "risk.change.kind", "points": 1, "value": 1, "confidence": "medium", "message": "the file is moved", "evidence": [{"side": "to", "node_keys": ["shop/new/shipping.py"]}, {"side": "from", "node_keys": ["shop/old/shipping.py"]}]},
+      {"rule": "risk.impact.dependents", "points": 1, "value": 1, "confidence": "high", "message": "1 dependent file(s) within 3 hop(s)", "evidence": [{"side": "to", "node_keys": ["shop/checkout.py"], "edge_refs": [{"ref": "edge", "kind": "IMPORTS", "source_key": "shop/checkout.py", "target_key": "shop/new/shipping.py#shipping_cost"}]}], "caveats": ["hidden_dependencies"]},
+      {"rule": "risk.test.no_dependent_test", "points": 0, "value": 0, "confidence": "low", "message": "no dependent test seen, but tests may be hidden: not scored", "evidence": [{"side": "to", "node_keys": ["shop/new/shipping.py"]}], "caveats": ["hidden_dependencies"]}
+    ]},
+    {"subject_key": "shop/pricing.py", "change": "modified", "level": "low", "points": 1, "confidence": "low", "caveats": ["undetermined_changes", "hidden_dependencies"], "factors": [
+      {"rule": "risk.change.kind", "points": 1, "value": 1, "confidence": "high", "message": "the file is modified", "evidence": [{"side": "to", "node_keys": ["shop/pricing.py"]}]},
+      {"rule": "risk.test.no_dependent_test", "points": 0, "value": 0, "confidence": "low", "message": "no dependent test seen, but tests may be hidden: not scored", "evidence": [{"side": "to", "node_keys": ["shop/pricing.py"]}], "caveats": ["hidden_dependencies"]}
+    ]},
+    {"subject_key": "shop/report.py", "change": "modified", "level": "low", "points": 1, "confidence": "low", "caveats": ["undetermined_changes", "incomplete_extraction", "hidden_dependencies"], "factors": [
+      {"rule": "risk.change.kind", "points": 1, "value": 1, "confidence": "high", "message": "the file is modified", "evidence": [{"side": "to", "node_keys": ["shop/report.py"]}]},
+      {"rule": "risk.test.no_dependent_test", "points": 0, "value": 0, "confidence": "low", "message": "no dependent test seen, but tests may be hidden: not scored", "evidence": [{"side": "to", "node_keys": ["shop/report.py"]}], "caveats": ["hidden_dependencies"]}
+    ]},
+    {"subject_key": "shop/settings/consts.py", "change": "added", "level": "low", "points": 0, "confidence": "medium", "caveats": ["hidden_dependencies"], "factors": [
+      {"rule": "risk.change.kind", "points": 0, "value": 1, "confidence": "high", "message": "the file is added", "evidence": [{"side": "to", "node_keys": ["shop/settings/consts.py"]}]},
+      {"rule": "risk.test.no_dependent_test", "points": 0, "value": 0, "confidence": "low", "message": "no dependent test seen, but tests may be hidden: not scored", "evidence": [{"side": "to", "node_keys": ["shop/settings/consts.py"]}], "caveats": ["hidden_dependencies"]}
+    ]},
+    {"subject_key": "shop/util.py", "change": "modified", "level": "medium", "points": 2, "confidence": "medium", "caveats": ["hidden_dependencies"], "factors": [
+      {"rule": "risk.change.kind", "points": 1, "value": 1, "confidence": "high", "message": "the file is modified", "evidence": [{"side": "to", "node_keys": ["shop/util.py"]}]},
+      {"rule": "risk.impact.dependents", "points": 1, "value": 1, "confidence": "high", "message": "1 dependent file(s) within 3 hop(s)", "evidence": [{"side": "to", "node_keys": ["shop/pricing.py"], "edge_refs": [{"ref": "edge", "kind": "IMPORTS", "source_key": "shop/pricing.py", "target_key": "shop/util.py#slugify"}]}], "caveats": ["hidden_dependencies"]},
+      {"rule": "risk.test.no_dependent_test", "points": 0, "value": 0, "confidence": "low", "message": "no dependent test seen, but tests may be hidden: not scored", "evidence": [{"side": "to", "node_keys": ["shop/util.py"]}], "caveats": ["hidden_dependencies"]}
+    ]}
+  ]
+}

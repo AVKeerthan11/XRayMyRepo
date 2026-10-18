@@ -287,9 +287,13 @@ def test_malformed_comparison_ids(client: TestClient, comparison_id: str) -> Non
         problem(client.get(f"{API}/comparisons/{comparison_id}{tail}"), 422, "validation_error")
 
 
-def test_snapshot_listing_errors(client: TestClient) -> None:
+def test_snapshot_listing_errors(client: TestClient, stored: dict[str, int]) -> None:
     problem(client.get(f"{API}/snapshots/999999/comparisons"), 404, "snapshot_not_found")
     problem(client.get(f"{API}/snapshots/0/comparisons"), 422, "validation_error")
+    listing = f"{API}/snapshots/{stored['after']}/comparisons"
+    for tampered in (2**63, -1):  # outside a bigint id: rejected, never a 500
+        problem(client.get(listing, params={"cursor": cursors.encode(tampered)}), 400,
+                "invalid_cursor")  # fmt: skip
 
 
 @pytest.mark.parametrize(
@@ -325,6 +329,10 @@ def test_unchanged_edges_are_not_listed(client: TestClient, stored: dict[str, in
         ("/node-changes", cursors.encode(3)),  # an edge-change cursor
         ("/edge-changes", cursors.encode("shop/a.py")),  # a node-change cursor
         ("/edge-changes", cursors.encode([1, 2])),
+        # Tampered values outside what the SQL compares with: rejected, never a 500.
+        ("/edge-changes", cursors.encode(2**63)),  # beyond a bigint id
+        ("/edge-changes", cursors.encode(-1)),
+        ("/node-changes", cursors.encode("a\x00b.py")),  # PostgreSQL text holds no NUL
     ],
 )
 def test_invalid_cursors(client: TestClient, stored: dict[str, int], tail: str,

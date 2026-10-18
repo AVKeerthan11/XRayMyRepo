@@ -15,7 +15,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from xraymyrepo.api import Settings, create_app
+from xraymyrepo.api import Settings, create_app, cursors
 from xraymyrepo.architecture import ArchitectureParams, derive
 from xraymyrepo.cim import Derivation, SnapshotDocument
 
@@ -369,3 +369,12 @@ def test_query_budget(
         statements.clear()
         ok(client.get(url, params={**params, "limit": limit} if limit else params))
         assert len(statements) == budget, statements
+
+
+@pytest.mark.parametrize("tampered", [2**63, 10**30, -1])  # outside a bigint id
+@pytest.mark.parametrize("path", ["/snapshots/{snapshot}/derivations", "{run}/findings"])
+def test_tampered_id_cursors_are_invalid(client: TestClient, stored: dict[str, int], path: str,
+                                         tampered: int) -> None:  # fmt: skip
+    """Rejected as invalid_cursor, never a 500 from the database."""
+    url = API + path.format(snapshot=stored["snapshot"], run=f"/derivations/{stored['run']}")
+    problem(client.get(url, params={"cursor": cursors.encode(tampered)}), 400, "invalid_cursor")

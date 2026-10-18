@@ -32,10 +32,12 @@ The app starts even when the database is down; `/ready` answers 503 until it is 
 
 ```text
 api/            FastAPI app, routes, response models, errors, cursors, CIM → API mapping
-persistence/    snapshots.py, derivations.py, comparisons.py (write + full load), queries.py,
-                derivation_queries.py, comparison_queries.py (focused reads), _rows.py,
-                _derivation_rows.py, _comparison_rows.py (row ↔ CIM)
-architecture/   derivation (CIM in, CIM out); orchestration.py runs load → derive/compare → persist
+persistence/    snapshots.py, derivations.py, comparisons.py, change_risk.py (write + full load),
+                queries.py, derivation_queries.py, comparison_queries.py, change_risk_queries.py
+                (focused reads), _rows.py, _derivation_rows.py, _comparison_rows.py,
+                _change_risk_rows.py (row ↔ CIM)
+architecture/   derivation (CIM in, CIM out); orchestration.py runs load → derive/compare/assess →
+                persist
 cim/            the domain contract
 analyzer/       independent of persistence and the API
 ```
@@ -51,6 +53,7 @@ through persistence, and for on-request computations (change impact) it may run 
   404 `snapshot_not_found`, pending or failed is 409 `snapshot_not_complete`. Likewise every run-scoped
   endpoint checks the run: 404 `derivation_not_found`, 409 `derivation_not_complete`. Every
   comparison-scoped endpoint checks the comparison: 404 `comparison_not_found`, 409 `comparison_not_complete`.
+  Every change-risk-scoped endpoint checks the run: 404 `change_risk_not_found`, 409 `change_risk_not_complete`.
 * **Response models are the API's own** (`api/models`). CIM *value types* (enums, `SourceSpan`, `Provenance`,
   evidence variants, per-kind attribute models, `AnalysisConfig`, `Producer`, `CoverageDeclaration`,
   `UnresolvedReference`, `ExtractionIssue`, `RepositoryRef`) appear inside them unchanged, so a change to one of
@@ -125,6 +128,35 @@ docs/comparison/comparison-v1.md. `{c}` is `/comparisons/{comparison_id}`.
   `edge-changes?change=unchanged` is 422 `validation_error`, and the OpenAPI enum of listed edge changes
   (`ListedEdgeChangeKind`) leaves it out. Edge refs are in their own snapshot's keys
   (`from_ref` in `from`, `to_ref` in `to`); open them with `/snapshots/{id}/edges/by-ref`.
+
+### Change risk
+
+How much each changed file of a comparison could break other code, as stored by
+`xraymyrepo.orchestration.assess_change_risk`; the API only reads it. Rules, factors and caveats:
+docs/insights/change-risk-v1.md. `{r}` is `/change-risks/{run_id}`.
+
+| Path | Purpose | Parameters | Response |
+| --- | --- | --- | --- |
+| `/comparisons/{id}/change-risks` | Change-risk runs of a comparison, newest first (any status) | `limit`, `cursor` | `Page[ChangeRiskRunSummary]` |
+| `{r}` | The run: its comparison, params, thresholds, level, confidence, caveats, counts | – | `ChangeRiskDetail` |
+| `{r}/items` | Risk items, riskiest first (level, then points, then subject key) | `level`*, `confidence`*, `caveat`* (any of), `limit`, `cursor` | `Page[RiskItemSummary]` |
+| `{r}/items/by-key` | One item, with every factor's evidence | `key` (a file key) | `RiskItemDetail` |
+
+* **A level is a lower bound on what was observed.**
+  * `conclusive` is derived, never stored: `high` confidence, no caveat and not capped. A run is conclusive
+    only when every item is.
+  * `capped` (items, derived) marks a test file whose level is capped at `low` (`risk.cap.test_file`). Its
+    `points` are not capped, and a capped item is never conclusive.
+  * A `low` item or run with `conclusive: false` means no risk was observed in what could be seen. It is not
+    evidence that the change is safe.
+  * There is no `safe` or `unknown` level (`RiskLevel` is `low`, `medium`, `high`).
+* **Caveats** say why risk may be understated (for example `hidden_dependencies`, `incomplete_extraction`).
+  An absence factor that was not scored is listed with 0 points and its caveats.
+* **Items** list factors without evidence; `items/by-key` adds it. Evidence (≤ 20 per factor) cites node keys,
+  edge refs and spans in the keys of the snapshot its `side` names (`from` or `to`).
+* **Errors.** An unknown or pending/failed run is 404 `change_risk_not_found` / 409
+  `change_risk_not_complete`, and the discovery route checks the comparison (404/409). A key that is not a
+  file key is 422 `invalid_key`; a file that is not an item is 404 `risk_item_not_found`.
 
 ### Change impact
 
@@ -234,9 +266,9 @@ Every error is RFC 9457 `application/problem+json`:
 
 | Status | `code` |
 | --- | --- |
-| 404 | `repository_not_found`, `snapshot_not_found`, `node_not_found` (also for `parent`/`node`), `edge_not_found`, `derivation_not_found`, `lens_not_found`, `group_not_found`, `comparison_not_found`, `not_found` (no such route) |
-| 409 | `snapshot_not_complete`, `derivation_not_complete`, `comparison_not_complete` |
-| 422 | `validation_error` (with `errors[]`: `loc`, `msg`, `type`); `invalid_key` (not a well-formed CIM node or group key, so it can never exist; also for `findings?subject=` and impact seeds); `invalid_parameters` (`group-edges` without exactly one of `lens`/`within`/`group`, or `direction` without `group`; impact with the repository root or more than 50 seeds) |
+| 404 | `repository_not_found`, `snapshot_not_found`, `node_not_found` (also for `parent`/`node`), `edge_not_found`, `derivation_not_found`, `lens_not_found`, `group_not_found`, `comparison_not_found`, `change_risk_not_found`, `risk_item_not_found`, `not_found` (no such route) |
+| 409 | `snapshot_not_complete`, `derivation_not_complete`, `comparison_not_complete`, `change_risk_not_complete` |
+| 422 | `validation_error` (with `errors[]`: `loc`, `msg`, `type`); `invalid_key` (not a well-formed CIM node or group key, so it can never exist; also for `findings?subject=`, impact seeds and change-risk item keys, which must be file keys); `invalid_parameters` (`group-edges` without exactly one of `lens`/`within`/`group`, or `direction` without `group`; impact with the repository root or more than 50 seeds) |
 | 400 | `invalid_cursor` |
 | 405 | `method_not_allowed` |
 | 503 | `database_unavailable` |
@@ -248,8 +280,9 @@ a project group has no direct members.
 ## Queries and cost
 
 Each request runs a fixed number of SQL statements, independent of page size (asserted in the
-`test_query_budget` tests of `tests/api/test_api_db.py`, `test_derivations_api_db.py` and
-`test_comparisons_api_db.py`), on the indexes of migrations 0001, 0003 and 0004:
+`test_query_budget` tests of `tests/api/test_api_db.py`, `test_derivations_api_db.py`,
+`test_comparisons_api_db.py` and `test_change_risk_api_db.py`), on the indexes of migrations 0001 and
+0003–0005:
 
 | Endpoint | Statements | Main indexes |
 | --- | --- | --- |
@@ -267,6 +300,9 @@ Each request runs a fixed number of SQL statements, independent of page size (as
 | `{run}/layers`, `layers/unclassified`, `findings` (also with `subject`), `metrics`, `/snapshots/{id}/derivations` | 2 | `inferred_layer_layer_idx`, `finding` primary key, `derivation_run_snapshot_idx` |
 | `{c}` | 5 | `snapshot_comparison` primary key, snapshot primary key |
 | `{c}/summary`, `{c}/node-changes`, `{c}/edge-changes`, `/snapshots/{id}/comparisons` | 2 | `node_change` primary key, `node_change_change_idx`, `node_change_kind_idx`; `edge_change` primary key; `snapshot_comparison_identity_key`, `snapshot_comparison_to_snapshot_idx` |
+| `{r}` | 4 | `change_risk_run` primary key, `snapshot_comparison` primary key |
+| `{r}/items`, `{r}/items/by-key` | 3 (2 for an empty page or a missing item) | `change_risk_item_rank_idx`, `change_risk_item` and `change_risk_factor` primary keys |
+| `/comparisons/{id}/change-risks` | 2 | `snapshot_comparison` primary key, `change_risk_run_identity_key` |
 
 ## Limitations
 
@@ -278,9 +314,10 @@ Each request runs a fixed number of SQL statements, independent of page size (as
   not stored.
 * **No source text.** Spans and `blob_sha` are exposed; serving file content needs a source/blob store
   decision.
-* **No writes.** Analysis, persistence, derivation and comparison run outside the API: derivations through
-  `xraymyrepo.orchestration.derive_architecture`, comparisons through `compare_snapshots`. There is no
-  endpoint that triggers a comparison. CLI commands for persisting and deriving are planned
+* **No writes.** Analysis, persistence, derivation, comparison and change risk run outside the API:
+  derivations through `xraymyrepo.orchestration.derive_architecture`, comparisons through
+  `compare_snapshots`, change risk through `assess_change_risk`. There is no endpoint that triggers a
+  comparison or a risk assessment. CLI commands for persisting and deriving are planned
   follow-ups.
 * **Architecture results are per run.** There is no "latest derivation" shortcut: list a snapshot's runs
   and pick one (by algorithm, version and `params_hash`). Dependencies on external packages are not rolled

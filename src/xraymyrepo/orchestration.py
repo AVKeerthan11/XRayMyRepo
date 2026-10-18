@@ -2,8 +2,8 @@
 persistence.
 
 ``architecture`` and ``insights`` are pure (CIM in, CIM out) and ``persistence``
-knows nothing about how derivations or comparisons are computed; this module wires
-them for callers. No CLI in this milestone.
+knows nothing about how derivations, comparisons or change risk are computed; this
+module wires them for callers. No CLI in this milestone.
 """
 
 from __future__ import annotations
@@ -15,18 +15,27 @@ from xraymyrepo.cim import Derivation, SnapshotDocument, SnapshotStatus
 
 from . import architecture
 from .architecture import ArchitectureParams, derive
+from .insights import change_risk as change_risk_algorithm
 from .insights import comparison as comparison_algorithm
 from .insights import health as health_algorithm
+from .insights.change_risk import ChangeRiskParams, change_risk
 from .insights.comparison import ComparisonParams, compare
 from .insights.health import HealthParams, health
 from .persistence import (
+    ChangeRiskExistsError,
     ComparisonExistsError,
+    ComparisonNotCompleteError,
+    ComparisonNotFoundError,
     DerivationRunExistsError,
     SnapshotNotCompleteError,
     SnapshotNotFoundError,
+    comparison_queries,
+    find_change_risk,
     find_comparison,
     find_derivation_run,
+    load_comparison,
     load_snapshot,
+    persist_change_risk,
     persist_comparison,
     persist_derivation,
     queries,
@@ -133,3 +142,42 @@ def compare_snapshots(
         load_snapshot(conn, from_snapshot_id), load_snapshot(conn, to_snapshot_id), params
     )
     return persist_comparison(conn, from_snapshot_id, to_snapshot_id, comparison, params.as_json())
+
+
+def assess_change_risk(
+    conn: Connection, comparison_id: int, params: ChangeRiskParams | None = None
+) -> int:
+    """Assess the change risk of a stored, complete comparison and store it; returns the
+    run id.
+
+    Raises ``ComparisonNotFoundError`` / ``ComparisonNotCompleteError`` for an unusable
+    comparison, and ``ChangeRiskExistsError`` when this (comparison, algorithm version,
+    params) run is already stored, in any status. Both checks run before anything is
+    loaded: assessments are deterministic, so an existing one is never recomputed or
+    replaced. A comparison that is not fully comparable is assessed, with the
+    ``incomparable_snapshots`` caveat. The comparison and both of its snapshots are
+    loaded (removed files are assessed in ``from``, the rest in ``to``); health is
+    computed inline by the algorithm. Storing is one transaction
+    (``persist_change_risk``); loading the immutable records needs none.
+    """
+    params = params or ChangeRiskParams()
+    record = comparison_queries.get_comparison(conn, comparison_id)
+    if record is None:
+        raise ComparisonNotFoundError(f"snapshot comparison {comparison_id} does not exist")
+    if record.status is not SnapshotStatus.COMPLETE:
+        raise ComparisonNotCompleteError(f"snapshot comparison {comparison_id} is {record.status}")
+    identity = (
+        change_risk_algorithm.ALGORITHM,
+        change_risk_algorithm.ALGORITHM_VERSION,
+        params.params_hash(),
+    )
+    existing = find_change_risk(conn, comparison_id, *identity)
+    if existing is not None:
+        raise ChangeRiskExistsError(existing.id, existing.status)
+    assessment = change_risk(
+        load_comparison(conn, comparison_id),
+        load_snapshot(conn, record.from_snapshot_id),
+        load_snapshot(conn, record.to_snapshot_id),
+        params,
+    )
+    return persist_change_risk(conn, comparison_id, assessment, params.as_json())

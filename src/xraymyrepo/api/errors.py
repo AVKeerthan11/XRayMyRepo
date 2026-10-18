@@ -2,10 +2,11 @@
 
 404  repository_not_found, snapshot_not_found, node_not_found, edge_not_found,
      derivation_not_found, lens_not_found, group_not_found, comparison_not_found,
-     not_found (no such route)
+     change_risk_not_found, risk_item_not_found, not_found (no such route)
 409  snapshot_not_complete   the snapshot is pending or failed; its data is not served
 409  derivation_not_complete the derivation run is pending or failed
 409  comparison_not_complete the comparison is pending or failed
+409  change_risk_not_complete the change-risk run is pending or failed
 422  validation_error        bad parameters (``errors`` lists them)
 422  invalid_parameters      a combination of parameters that cannot be answered
 422  invalid_key             not a well-formed CIM node or group key, so it can never exist

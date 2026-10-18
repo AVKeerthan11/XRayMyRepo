@@ -9,9 +9,11 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from xraymyrepo.cim import (
+    ChangeRiskSummary,
     Classification,
     ClassificationFacet,
     ComparisonSummary,
+    Confidence,
     Edge,
     EdgeChange,
     EdgeKind,
@@ -20,9 +22,11 @@ from xraymyrepo.cim import (
     GroupEdge,
     InferredLayer,
     NodeChange,
+    RiskItem,
 )
 from xraymyrepo.cim.nodes import Node
 from xraymyrepo.cim.provenance import Provenance
+from xraymyrepo.persistence import change_risk_queries as crq
 from xraymyrepo.persistence import comparison_queries as cq
 from xraymyrepo.persistence import derivation_queries as dq
 from xraymyrepo.persistence import queries
@@ -329,3 +333,73 @@ def edge_change_view(change: EdgeChange) -> models.EdgeChangeView:
         to_ref=change.to_ref,
         confidence=change.confidence,
     )
+
+
+def change_risk_summary(record: crq.ChangeRiskRecord) -> models.ChangeRiskRunSummary:
+    complete = record.confidence is not None
+    return models.ChangeRiskRunSummary(
+        id=record.id,
+        comparison_id=record.comparison_id,
+        algorithm=record.algorithm,
+        algorithm_version=record.algorithm_version,
+        params_hash=record.params_hash,
+        medium_at=record.medium_at,
+        high_at=record.high_at,
+        caveats=list(record.caveats),
+        excluded_by_origin=record.excluded_by_origin,
+        level=record.level,
+        confidence=record.confidence,
+        # Derived, as ChangeRiskAssessment.conclusive: never stored.
+        conclusive=(
+            record.confidence is Confidence.HIGH and not record.caveats and not record.capped_items
+        )
+        if complete
+        else None,
+        status=record.status,
+        failure_reason=record.failure_reason,
+        created_at=record.created_at,
+        finished_at=record.finished_at,
+    )
+
+
+def change_risk_counts(summary: ChangeRiskSummary) -> models.ChangeRiskCounts:
+    return models.ChangeRiskCounts(
+        levels=dict(summary.levels), confidences=dict(summary.confidences)
+    )
+
+
+def _risk_item_fields(item: RiskItem) -> dict[str, object]:
+    return {
+        "subject_key": item.subject_key,
+        "change": item.change,
+        "level": item.level,
+        "points": item.points,
+        "confidence": item.confidence,
+        "capped": item.capped,
+        "conclusive": item.conclusive,
+        "caveats": list(item.caveats),
+    }
+
+
+def risk_item_summary(item: RiskItem) -> models.RiskItemSummary:
+    return models.RiskItemSummary(
+        **_risk_item_fields(item),
+        factors=[
+            models.RiskFactorSummary(rule=f.rule, points=f.points, value=f.value,
+                                     confidence=f.confidence, message=f.message,
+                                     caveats=list(f.caveats))
+            for f in item.factors
+        ],
+    )  # fmt: skip
+
+
+def risk_item_detail(item: RiskItem) -> models.RiskItemDetail:
+    return models.RiskItemDetail(
+        **_risk_item_fields(item),
+        factors=[
+            models.RiskFactorDetail(rule=f.rule, points=f.points, value=f.value,
+                                    confidence=f.confidence, message=f.message,
+                                    caveats=list(f.caveats), evidence=list(f.evidence))
+            for f in item.factors
+        ],
+    )  # fmt: skip

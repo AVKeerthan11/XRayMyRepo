@@ -37,8 +37,8 @@ router = APIRouter(tags=["comparison"])
 COMPARISON = "/comparisons/{comparison_id}"
 _PROBLEMS = {"conflict": "Comparison not complete"}
 
-_ID_CURSOR: TypeAdapter[int] = TypeAdapter(int)
-_KEY_CURSOR: TypeAdapter[str] = TypeAdapter(str)
+_ID_CURSOR: TypeAdapter[int] = TypeAdapter(cursors.Id)
+_KEY_CURSOR: TypeAdapter[str] = TypeAdapter(cursors.Key)
 
 
 @router.get(

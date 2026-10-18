@@ -8,10 +8,21 @@ Canonical documentation: docs/cim/CIM-v1.md. Three tiers, each immutable:
                       inferred layers
 * interpretation      ``Annotation``: append-only AI output; never graph facts
 
-Across two snapshots of one repository: ``NodeLineage`` and ``SnapshotComparison``
-(node and edge changes).
+Across two snapshots of one repository: ``NodeLineage``, ``SnapshotComparison`` (node
+and edge changes) and ``ChangeRiskAssessment`` (how much each changed file could break).
 """
 
+from .change_risk import (
+    CAVEAT_CONFIDENCE,
+    ChangeRiskAssessment,
+    ChangeRiskRun,
+    ChangeRiskSummary,
+    RiskEvidence,
+    RiskFactor,
+    RiskItem,
+    confidence_of,
+    level_for,
+)
 from .classification import Classification, applicable_kinds
 from .comparison import (
     ComparisonRun,
@@ -67,7 +78,11 @@ from .enums import (
     Origin,
     ReferenceKind,
     RequirementScope,
+    RiskCaveat,
+    RiskFactorRule,
+    RiskLevel,
     Role,
+    Side,
     SnapshotStatus,
     TypeKind,
     UnresolvedReason,
@@ -113,6 +128,7 @@ from .refs import EdgeRef, NodeRef, SpanRef
 from .snapshot import CIM_SCHEMA_VERSION, AnalysisConfig, RepositoryRef, Snapshot, SnapshotIdentity
 
 __all__ = [
+    "CAVEAT_CONFIDENCE",
     "CIM_SCHEMA_VERSION",
     "EDGE_RULES",
     "REPOSITORY_KEY",
@@ -123,6 +139,9 @@ __all__ = [
     "Basis",
     "CallKind",
     "CallsAttributes",
+    "ChangeRiskAssessment",
+    "ChangeRiskRun",
+    "ChangeRiskSummary",
     "Classification",
     "ClassificationFacet",
     "ComparisonRun",
@@ -183,8 +202,15 @@ __all__ = [
     "RepositoryRef",
     "RequirementScope",
     "RequiresAttributes",
+    "RiskCaveat",
+    "RiskEvidence",
+    "RiskFactor",
+    "RiskFactorRule",
+    "RiskItem",
+    "RiskLevel",
     "Role",
     "Segment",
+    "Side",
     "SignatureShape",
     "Snapshot",
     "SnapshotComparison",
@@ -201,12 +227,14 @@ __all__ = [
     "UnresolvedReason",
     "UnresolvedReference",
     "applicable_kinds",
+    "confidence_of",
     "content_hash",
     "endpoint_key",
     "endpoint_scope",
     "external_package_key",
     "group_key",
     "incomparability",
+    "level_for",
     "package_key",
     "parse_endpoint_key",
     "path_key",
