@@ -102,7 +102,8 @@ export const ARCHITECTURE_RUN = {
   finding_counts: { "arch.layer.violation": 1 },
   lenses: [
     { name: "directory", kind: "directory", group_count: 7, member_count: 20 },
-    { name: "components", kind: "inferred", group_count: 3, member_count: 12 },
+    // group_count counts groups at every level: 3 islands and 2 districts.
+    { name: "components", kind: "inferred", group_count: 5, member_count: 12 },
   ],
   layer_coverage: { considered: 12, classified: 9, unclassified: 3, by_layer: { interface: 3, application: 2, domain: 2, infrastructure: 2 }, by_confidence: { high: 6, medium: 3 } },
 } satisfies S["DerivationRunDetail"];

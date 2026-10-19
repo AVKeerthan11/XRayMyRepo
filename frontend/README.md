@@ -48,18 +48,30 @@ fallback, reduced motion, and an unreachable API.
 The world reads what the backend has stored; nothing here writes to the database. A snapshot needs an
 `architecture` derivation run for islands (without one, islands are top-level directories) and a `health`
 run for S1's building heights. Both are created with the backend's existing orchestration functions.
-Use an application database, **never `xraytest`** (the backend test suite wipes it).
+Use the dedicated application database `xray`, **never `xraytest` or `xraytest_comparison`**: those are
+disposable test databases, and the backend test suite drops and recreates the schema of the one it uses.
 
-PowerShell, from the repository root, with the `xray-postgres` container running:
+PowerShell (Windows PowerShell 5.1 or later), from the repository root, with the `xray-postgres` container
+running and the backend's virtual environment active:
 
 ```powershell
-# 1. An application database, migrated once (migrations are applied in order by the caller).
+# 1. The application database, migrated once. Migrations are applied by the caller, in filename order;
+#    each file is one transaction and records itself in schema_migration. psql reads every file inside
+#    the container and stops at the first error.
 docker exec xray-postgres createdb -U postgres xray
-docker cp db/migrations xray-postgres:/tmp/xray-migrations
-docker exec xray-postgres sh -c 'for f in /tmp/xray-migrations/*.sql; do psql -U postgres -d xray -v ON_ERROR_STOP=1 -q -f "$f" || exit 1; done'
+docker cp db/migrations/. xray-postgres:/tmp/xray-migrations
+foreach ($f in Get-ChildItem db/migrations -Filter *.sql | Sort-Object Name) {
+  docker exec -e PGCLIENTENCODING=UTF8 xray-postgres psql -U postgres -d xray -X -q -v ON_ERROR_STOP=1 -f "/tmp/xray-migrations/$($f.Name)"
+  if ($LASTEXITCODE -ne 0) { Write-Error "Migration $($f.Name) failed; stopping."; break }
+}
+docker exec xray-postgres psql -U postgres -d xray -X -c "SELECT version FROM schema_migration ORDER BY version"
 
-# 2. Point the backend at it (this shell only).
-$env:XRAY_DATABASE_URL = "postgresql://postgres:<password>@localhost:5432/xray"
+# 2. Point the backend at it, in this shell only. The password is read from the container into a
+#    variable: it is never typed, printed, or saved in history or files.
+$pw = "$(docker exec xray-postgres printenv POSTGRES_PASSWORD)".Trim()
+if (-not $pw) { throw "POSTGRES_PASSWORD is not set in xray-postgres" }
+$env:XRAY_DATABASE_URL = "postgresql://postgres:" + [uri]::EscapeDataString($pw) + "@127.0.0.1:5432/xray"
+Remove-Variable pw
 
 # 3. Ingest a public repository; note "snapshot_id" in the JSON it prints.
 python -m xraymyrepo ingest https://github.com/pallets/flask --ref main
@@ -72,6 +84,18 @@ uvicorn --factory xraymyrepo.api:create_app
 ```
 
 Re-running step 4 raises `DerivationRunExistsError` by design: runs are immutable and never replaced.
+
+Why these commands look the way they do:
+
+* **No `sh -c` loop.** Windows PowerShell 5.1 drops embedded double quotes when it passes arguments to
+  `docker`, so a `sh -c '… "$f" …'` script reaches `sh` split apart and fails with
+  `Syntax error: end of file unexpected (expecting "done")`. The loop runs in PowerShell instead, one
+  `docker exec … psql -f` per file. SQL is never piped from PowerShell into `psql` (PowerShell re-encodes
+  piped text).
+* **`127.0.0.1`, not `localhost`.** `localhost` may resolve to `::1`, where another process (for example
+  a WSL relay) can be listening on port 5432 instead of the container.
+* **Steps 2 and 5 share a shell.** `XRAY_DATABASE_URL` is set for the current PowerShell session only; set
+  it again in any new shell that runs ingestion, derivations or the API.
 
 ## Layout
 

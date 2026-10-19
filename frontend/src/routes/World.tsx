@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router";
 
 import type { Schemas } from "../api/client";
-import { useDerivationRun, useDerivations, useSnapshot, slugOf } from "../api/queries";
+import { useDerivationRun, useDerivations, useGroupChildren, useSnapshot, slugOf } from "../api/queries";
 import {
   ARCHITECTURE,
   HEALTH,
@@ -260,19 +260,28 @@ function RunLine({ name, run, purpose }: { name: string; run: Schemas["Derivatio
 }
 
 function SourceNote({ source }: { source: IslandSource }) {
-  if (source.kind === "lens") {
-    return (
-      <p className="text-sm text-mist">
-        Islands are the {plural(source.lens.group_count, "group")} of the{" "}
-        <span className="font-mono text-ink">{source.lens.name}</span> lens ({source.lens.kind}).
-      </p>
-    );
-  }
+  if (source.kind === "lens") return <LensNote runId={source.runId} lens={source.lens} />;
   return (
     <p className="text-sm text-mist">
       {source.reason === "no_architecture_run"
         ? "No architecture run for this snapshot yet: islands are its top-level directories."
         : "The architecture run has no groups: islands are the snapshot's top-level directories."}
+    </p>
+  );
+}
+
+/**
+ * `LensSummary.group_count` counts the lens's groups at every level, so the number of islands
+ * comes from the top-level query the outline itself makes (same query key: no extra request).
+ */
+function LensNote({ runId, lens }: { runId: number; lens: Schemas["LensSummary"] }) {
+  const islands = useGroupChildren(runId, lens.name, null);
+  const count = islands.data ? islands.data.items.length : null;
+  return (
+    <p className="text-sm text-mist">
+      Islands are the {count === null ? "" : `${islands.data?.truncated ? "first " : ""}${count.toLocaleString()} `}
+      top-level {count === 1 ? "group" : "groups"} of the <span className="font-mono text-ink">{lens.name}</span> lens (
+      {lens.kind}), which has {plural(lens.group_count, "group")} at every level.
     </p>
   );
 }

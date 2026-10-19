@@ -46,7 +46,10 @@ describe("World", () => {
     expect(sources).not.toHaveTextContent(/#12|#9/);
 
     const world = await outline();
-    expect(await world.findByText(/islands are the 3 groups of the/i)).toHaveTextContent("components lens (inferred)");
+    // The island count is the top-level groups, not the lens's group_count (every level).
+    expect(await world.findByText(/islands are the 3 top-level groups of the/i)).toHaveTextContent(
+      "components lens (inferred), which has 5 groups at every level.",
+    );
     // Island names carry their real size: metrics.files and child_group_count.
     expect(await world.findByRole("button", { name: "acme-backend, 9 files · 2 districts" })).toBeInTheDocument();
     expect(world.getByRole("button", { name: "manage, 1 file" })).toBeInTheDocument();
