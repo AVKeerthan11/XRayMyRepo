@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens: the only colours, typefaces and motion values the app uses.
+ * Text colours keep WCAG AA contrast on --color-void (ink ~16:1, mist ~8:1, faint ~5:1).
+ * Colour carries meaning; decoration stays in the background.
+ */
+@theme {
+  --color-void: #05070d;
+  --color-abyss: #0a1020;
+  --color-deep: #111a2e;
+  --color-ink: #e8edf6;
+  --color-mist: #a3aec4;
+  --color-faint: #7f8ba4;
+  --color-line: rgb(163 174 196 / 0.14);
+  --color-line-strong: rgb(163 174 196 / 0.32);
+  --color-signal: #7cc4ff;
+  --color-signal-deep: #1d4f7a;
+  --color-ember: #ffc078;
+  --color-fault: #ff8a8a;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+
+  --ease-glide: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-quick: 140ms;
+  --duration-settle: 320ms;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-void);
+    /* The observatory: a faint horizon glow and a sparse, static star field. */
+    background-image:
+      radial-gradient(120% 70% at 50% 115%, rgb(29 79 122 / 0.35), transparent 60%),
+      radial-gradient(1px 1px at 12% 18%, rgb(232 237 246 / 0.5), transparent 50%),
+      radial-gradient(1px 1px at 68% 9%, rgb(232 237 246 / 0.35), transparent 50%),
+      radial-gradient(1px 1px at 84% 42%, rgb(232 237 246 / 0.3), transparent 50%),
+      radial-gradient(1px 1px at 31% 63%, rgb(232 237 246 / 0.25), transparent 50%),
+      radial-gradient(1.5px 1.5px at 52% 31%, rgb(124 196 255 / 0.45), transparent 50%);
+    background-attachment: fixed;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: var(--color-signal-deep);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
